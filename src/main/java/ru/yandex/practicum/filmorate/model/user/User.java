@@ -8,12 +8,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 
-/*
-* целочисленный идентификатор — id;
-электронная почта — email;
-логин пользователя — login;
-имя для отображения — name;
-дата рождения — birthday.*/
 @Data
 public class User {
     private Integer id;

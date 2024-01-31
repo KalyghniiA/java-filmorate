@@ -7,16 +7,14 @@ import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.user.User;
 
 import javax.validation.Valid;
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @Slf4j
 public class UserController {
-    private Map<Integer, User> users = new HashMap<>();
+    private final Map<Integer, User> users = new HashMap<>();
     private Integer nextId = 1;
 
     @PostMapping(value = "/users", headers = "content-type=application/json")
@@ -84,42 +82,3 @@ public class UserController {
         return user;
     }
 }
-//    private boolean isValid(User user) {
-//        if (user == null) {
-//            return false;
-//        }
-//        String email = user.getEmail();
-//        String login = user.getLogin();
-//        String name = user.getName();
-//        LocalDate date = user.getBirthday();
-//
-//        if (email == null ||
-//            login == null ||
-//            name == null ||
-//            date == null) {
-//            log.info("Один или несколько параметров имеет значение null");
-//            return false;
-//        }
-//
-//        if (email.isEmpty() || email.isBlank() || !email.contains("@")) {
-//            log.info("Email не валиден");
-//            return false;
-//        }
-//
-//        if (!login.matches("^\\w+$")) {
-//            log.info("Логин не валиден");
-//            return false;
-//        }
-//
-//        if (date.isAfter(LocalDate.now())) {
-//            log.info("День рождения не валиден");
-//            return false;
-//        }
-//
-//        return true;
-//    }
-
-//    Для UserController:
-//        создание пользователя;
-//        обновление пользователя;
-//        получение списка всех пользователей.
