@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller.film;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exceptions.FilmControllerException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.film.Film;
 
 import javax.validation.Valid;
@@ -20,17 +21,11 @@ public class FilmController {
     }
 
     @GetMapping(value = "/films/{id}")
-    public Film getFilm(@PathVariable("id") String id) throws FilmControllerException {
-        Integer idKey;
-        try {
-            idKey = Integer.valueOf(id);
-        } catch (NumberFormatException e) {
-            throw new FilmControllerException(e.getMessage());
+    public Film getFilm(@PathVariable("id") Integer id) throws FilmControllerException, NotFoundException {
+        if (!films.containsKey(id)) {
+            throw new NotFoundException("Данного фильма нет в базе");
         }
-        if (!films.containsKey(idKey)) {
-            throw new FilmControllerException("Данного фильма нет в базе");
-        }
-        Film film = films.get(idKey);
+        Film film = films.get(id);
         if (film == null) {
             throw new FilmControllerException("Произошла ошибка в базе, попробуйте проверить id");
         }
@@ -43,9 +38,6 @@ public class FilmController {
         if (film == null) {
             throw new FilmControllerException("Отправлено пустое значение");
         }
-        if (film.getId() != null && films.containsKey(film.getId())) {
-            throw new FilmControllerException("Данный фильм уже добавлен в базу, если требуется заменить, то использовать метод PUT");
-        }
 
         film.setId(nextId++);
         films.put(film.getId(), film);
@@ -53,12 +45,12 @@ public class FilmController {
     }
 
     @PutMapping(value = "/films")
-    public Film putFilm(@RequestBody @Valid Film film) throws FilmControllerException {
+    public Film putFilm(@RequestBody @Valid Film film) throws FilmControllerException, NotFoundException {
         if (film == null) {
             throw new FilmControllerException("Отправлено пустое значение");
         }
         if (film.getId() == null || !films.containsKey(film.getId())) {
-            throw new FilmControllerException("Данного фильма нет в базе, если требуется добавить фильм, то требуется использоваться метод POST");
+            throw new NotFoundException("Данного фильма нет в базе, если требуется добавить фильм, то требуется использоваться метод POST");
         }
 
         films.put(film.getId(), film);

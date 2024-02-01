@@ -23,10 +23,6 @@ public class UserController {
             log.info("Передано пустое значение");
             throw new UserControllerException("Передано пустое значение");
         }
-        if (user.getId() != null && users.containsKey(user.getId())) {
-            log.info("Данный юзер уже добавлен в базу");
-            throw new UserControllerException("Данный юзер уже добавлен в базу");
-        }
 
         if (user.getName() == null) {
             user.setName(user.getLogin());
@@ -39,19 +35,13 @@ public class UserController {
     }
 
     @GetMapping(value = "/users/{id}")
-    public User getUser(@PathVariable("id") String id) throws UserControllerException {
-        Integer idKey;
-        try {
-            idKey = Integer.valueOf(id);
-        } catch (NumberFormatException e) {
-            log.info("Не верный формат id");
-            throw new UserControllerException(e.getMessage());
-        }
-        if (!users.containsKey(idKey)) {
+    public User getUser(@PathVariable("id") Integer id) throws UserControllerException {
+
+        if (!users.containsKey(id)) {
             log.info("Данного юзера нет в базе по id" + id);
             throw new UserControllerException("Данного юзера нет в базе");
         }
-        User user = users.get(idKey);
+        User user = users.get(id);
         if (user == null) {
             log.info("В базе произошла ошибка, пустой объект в базе");
             throw new UserControllerException("В базе произошла ошибка, проверьте верность id");
@@ -75,6 +65,10 @@ public class UserController {
         if (user.getId() == null || !users.containsKey(user.getId())) {
             log.info("Данного юзера нет в базе по id" + user.getId());
             throw new UserControllerException("Данного юзера нет в базе");
+        }
+
+        if (user.getName() == null) {
+            user.setName(user.getLogin());
         }
 
         users.put(user.getId(), user);

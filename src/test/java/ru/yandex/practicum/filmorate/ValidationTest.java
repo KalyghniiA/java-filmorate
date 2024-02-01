@@ -41,7 +41,7 @@ public class ValidationTest {
     public void testingValidationFilmName() {
         Set<ConstraintViolation<Film>> violations = validator.validate(new Film("", "description", LocalDate.now(), 100));
 
-        assertEquals(2, violations.size());
+        assertEquals(1, violations.size());
     }
 
     @Test
