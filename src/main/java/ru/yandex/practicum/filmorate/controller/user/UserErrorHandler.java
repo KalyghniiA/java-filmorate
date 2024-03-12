@@ -26,7 +26,7 @@ public class UserErrorHandler {
 
     @ExceptionHandler({EmptyBodyException.class, UserFriendException.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handlerInternalException (Exception e) {
+    public ErrorResponse handlerInternalException(Exception e) {
         return new ErrorResponse("user", e.getMessage());
     }
 }
