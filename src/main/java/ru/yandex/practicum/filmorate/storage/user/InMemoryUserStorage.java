@@ -13,6 +13,7 @@ import java.util.Map;
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users = new HashMap<>();
     private int currentId = 1;
+
     @Override
     public User add(User user) throws EmptyBodyException {
         if (user == null) throw new EmptyBodyException("Передано пустое поле");
