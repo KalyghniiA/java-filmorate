@@ -56,7 +56,6 @@ public class UserController {
     @DeleteMapping(value = "/users/{id}/friends/{friendId}")
     public User deleteFriendForUser(@PathVariable Integer id, @PathVariable Integer friendId) throws
             EmptyBodyException,
-            UserFriendException,
             NotFoundUserException {
         return userService.deleteFriend(id, friendId);
     }
