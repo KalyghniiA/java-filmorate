@@ -8,8 +8,12 @@ import java.util.Collection;
 
 public interface UserStorage {
     User add(User user) throws EmptyBodyException;
+
     User delete(Integer id) throws EmptyBodyException, NotFoundUserException;
+
     User put(User user) throws NotFoundUserException, EmptyBodyException;
+
     User get(Integer id) throws EmptyBodyException, NotFoundUserException;
+
     Collection<User> getAll();
 }
