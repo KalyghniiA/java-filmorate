@@ -1,78 +1,77 @@
 package ru.yandex.practicum.filmorate.controller.user;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.UserControllerException;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.exceptions.*;
 import ru.yandex.practicum.filmorate.model.user.User;
+import ru.yandex.practicum.filmorate.service.user.UserService;
 
 import javax.validation.Valid;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @Slf4j
 public class UserController {
-    private final Map<Integer, User> users = new HashMap<>();
-    private Integer nextId = 1;
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping(value = "/users", headers = "content-type=application/json")
-    public User postUser(@RequestBody @Valid User user) throws UserControllerException, ValidationException {
-        if (user == null) {
-            log.info("Передано пустое значение");
-            throw new UserControllerException("Передано пустое значение");
-        }
-
-        if (user.getName() == null) {
-            user.setName(user.getLogin());
-        }
-
-        user.setId(nextId++);
-        users.put(user.getId(), user);
-        log.info("Добавлен пользователь под id" + user.getId());
-        return user;
+    public User postUser(@RequestBody @Valid User user) throws EmptyBodyException {
+        return userService.postUser(user);
     }
 
     @GetMapping(value = "/users/{id}")
-    public User getUser(@PathVariable("id") Integer id) throws UserControllerException {
-
-        if (!users.containsKey(id)) {
-            log.info("Данного юзера нет в базе по id" + id);
-            throw new UserControllerException("Данного юзера нет в базе");
-        }
-        User user = users.get(id);
-        if (user == null) {
-            log.info("В базе произошла ошибка, пустой объект в базе");
-            throw new UserControllerException("В базе произошла ошибка, проверьте верность id");
-        }
-        return user;
+    public User getUser(@PathVariable("id") Integer id) throws EmptyBodyException, NotFoundUserException {
+        return userService.getUser(id);
     }
 
     @GetMapping(value = "/users")
     public Collection<User> getUsers() {
-        return users.values();
+        return userService.getAllUser();
     }
 
-
     @PutMapping(value = "/users", headers = "content-type=application/json")
-    public User putUser(@RequestBody @Valid User user) throws UserControllerException, ValidationException {
-        if (user == null) {
-            log.info("Отправлено пустое значение");
-            throw new UserControllerException("Отправлено пустое значение");
-        }
+    public User putUser(@RequestBody @Valid User user) throws EmptyBodyException, NotFoundUserException {
+        return userService.putUser(user);
+    }
 
-        if (user.getId() == null || !users.containsKey(user.getId())) {
-            log.info("Данного юзера нет в базе по id" + user.getId());
-            throw new UserControllerException("Данного юзера нет в базе");
-        }
+    @DeleteMapping(value = "/users/{id}")
+    public User deleteUser(@PathVariable Integer id) throws EmptyBodyException, NotFoundUserException {
+        return userService.deleteUser(id);
+    }
 
-        if (user.getName() == null) {
-            user.setName(user.getLogin());
-        }
+    @PutMapping(value = "/users/{id}/friends/{friendId}")
+    public User addFriendForUser(@PathVariable Integer id, @PathVariable Integer friendId) throws
+            EmptyBodyException,
+            UserFriendException,
+            NotFoundUserException {
+        return userService.addFriend(id, friendId);
+    }
 
-        users.put(user.getId(), user);
-        log.info("Изменен пользователь под id" + user.getId());
-        return user;
+    @DeleteMapping(value = "/users/{id}/friends/{friendId}")
+    public User deleteFriendForUser(@PathVariable Integer id, @PathVariable Integer friendId) throws
+            EmptyBodyException,
+            UserFriendException,
+            NotFoundUserException {
+        return userService.deleteFriend(id, friendId);
+    }
+
+    @GetMapping(value = "/users/{id}/friends")
+    public Collection<User> getFriendsForUser(@PathVariable Integer id) throws
+            EmptyBodyException,
+            NotFoundUserException {
+        return userService.getFriendsForUser(id);
+    }
+
+    @GetMapping(value = "/users/{id}/friends/common/{otherId}")
+    public Collection<User> getMutualFriendsForUser(@PathVariable Integer id, @PathVariable Integer otherId) throws
+            EmptyBodyException,
+            NotFoundUserException {
+        return userService.getMutualFriendsForUser(id, otherId);
     }
 }

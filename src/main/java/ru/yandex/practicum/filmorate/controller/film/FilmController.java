@@ -1,10 +1,11 @@
 package ru.yandex.practicum.filmorate.controller.film;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.FilmControllerException;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.*;
 import ru.yandex.practicum.filmorate.model.film.Film;
+import ru.yandex.practicum.filmorate.service.film.FilmService;
 
 import javax.validation.Valid;
 import java.util.*;
@@ -12,48 +13,58 @@ import java.util.*;
 @RestController
 @Slf4j
 public class FilmController {
-    private Map<Integer,Film> films = new HashMap<>();
-    private Integer nextId = 1;
+    private final FilmService filmService;
+
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
 
     @GetMapping(value = "/films")
     public Collection<Film> getFilms() {
-        return films.values();
+        return filmService.getAllFilm();
     }
 
     @GetMapping(value = "/films/{id}")
-    public Film getFilm(@PathVariable("id") Integer id) throws FilmControllerException, NotFoundException {
-        if (!films.containsKey(id)) {
-            throw new NotFoundException("Данного фильма нет в базе");
-        }
-        Film film = films.get(id);
-        if (film == null) {
-            throw new FilmControllerException("Произошла ошибка в базе, попробуйте проверить id");
-        }
-
-        return film;
+    public Film getFilm(@PathVariable("id") Integer id) throws NotFoundFilmException, EmptyBodyException {
+        return filmService.getFilm(id);
     }
 
     @PostMapping(value = "/films", headers = "content-type=application/json")
-    public Film postFilm(@RequestBody @Valid Film film) throws FilmControllerException {
-        if (film == null) {
-            throw new FilmControllerException("Отправлено пустое значение");
-        }
-
-        film.setId(nextId++);
-        films.put(film.getId(), film);
-        return film;
+    public Film postFilm(@RequestBody @Valid Film film) throws EmptyBodyException {
+        return filmService.postFilm(film);
     }
 
     @PutMapping(value = "/films")
-    public Film putFilm(@RequestBody @Valid Film film) throws FilmControllerException, NotFoundException {
-        if (film == null) {
-            throw new FilmControllerException("Отправлено пустое значение");
-        }
-        if (film.getId() == null || !films.containsKey(film.getId())) {
-            throw new NotFoundException("Данного фильма нет в базе, если требуется добавить фильм, то требуется использоваться метод POST");
-        }
+    public Film putFilm(@RequestBody @Valid Film film) throws NotFoundFilmException, EmptyBodyException {
+        return filmService.putFilm(film);
+    }
 
-        films.put(film.getId(), film);
+    @PutMapping(value = "/films/{id}/like/{userId}")
+    public Film addLike(@PathVariable Integer id, @PathVariable Integer userId) throws
+            NotFoundFilmException,
+            EmptyBodyException,
+            LikeException,
+            NotFoundUserException {
+        return filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping(value = "/films/{id}/like/{userId}")
+    public Film removeLike(@PathVariable Integer id,@PathVariable Integer userId) throws
+            NotFoundFilmException,
+            EmptyBodyException,
+            LikeException,
+            NotFoundUserException {
+        return filmService.removeLike(id, userId);
+    }
+
+    @GetMapping(value = "/films/popular")
+    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        return filmService.getPopularFilms(count);
+    }
+
+    @PostMapping(value = "/test")
+    public Film test(@RequestBody @Valid Film film) {
         return film;
     }
 }

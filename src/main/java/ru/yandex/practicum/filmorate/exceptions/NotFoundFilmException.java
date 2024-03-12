@@ -1,9 +1,9 @@
 package ru.yandex.practicum.filmorate.exceptions;
 
-public class NotFoundException extends Exception {
-    String message;
+public class NotFoundFilmException extends Exception {
+    private String message;
 
-    public NotFoundException(String message) {
+    public NotFoundFilmException(String message) {
         this.message = message;
     }
 
