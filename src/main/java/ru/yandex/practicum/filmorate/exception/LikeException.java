@@ -1,6 +1,6 @@
-package ru.yandex.practicum.filmorate.exceptions;
+package ru.yandex.practicum.filmorate.exception;
 
-public class LikeException extends Exception {
+public class LikeException extends RuntimeException {
     private final String message;
 
     public LikeException(String message) {

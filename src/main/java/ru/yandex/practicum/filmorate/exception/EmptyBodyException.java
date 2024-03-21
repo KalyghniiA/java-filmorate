@@ -1,6 +1,6 @@
-package ru.yandex.practicum.filmorate.exceptions;
+package ru.yandex.practicum.filmorate.exception;
 
-public class EmptyBodyException extends Exception {
+public class EmptyBodyException extends RuntimeException {
     private final String message;
 
     public EmptyBodyException(String message) {

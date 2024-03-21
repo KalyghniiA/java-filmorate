@@ -1,6 +1,6 @@
-package ru.yandex.practicum.filmorate.exceptions;
+package ru.yandex.practicum.filmorate.exception;
 
-public class UserFriendException extends Exception {
+public class UserFriendException extends RuntimeException {
     private final String message;
 
     public UserFriendException(String message) {

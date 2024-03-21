@@ -1,9 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exceptions.EmptyBodyException;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundUserException;
-import ru.yandex.practicum.filmorate.model.user.User;
+import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,8 +13,7 @@ public class InMemoryUserStorage implements UserStorage {
     private int currentId = 1;
 
     @Override
-    public User add(User user) throws EmptyBodyException {
-        if (user == null) throw new EmptyBodyException("Передано пустое поле");
+    public User add(User user) {
         if (user.getName() == null) user.setName(user.getLogin());
 
         user.setId(currentId++);
@@ -25,19 +22,12 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User delete(Integer id) throws EmptyBodyException, NotFoundUserException {
-        if (id == null) throw new EmptyBodyException("Передано пустое значение");
-        if (!users.containsKey(id)) throw new NotFoundUserException(String.format("User с id %s нет в базе", id));
-
+    public User delete(Integer id) {
         return users.remove(id);
     }
 
     @Override
-    public User put(User user) throws NotFoundUserException, EmptyBodyException {
-        if (user == null) throw new EmptyBodyException("Передано пустое значение");
-        if (!users.containsKey(user.getId())) {
-            throw new NotFoundUserException(String.format("User с id %s нет в базе", user.getId()));
-        }
+    public User put(User user) {
         if (user.getName() == null) user.setName(user.getLogin());
 
         users.put(user.getId(), user);
@@ -45,9 +35,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User get(Integer id) throws EmptyBodyException, NotFoundUserException {
-        if (id == null) throw new EmptyBodyException("Передано пустое значение");
-        if (!users.containsKey(id)) throw new NotFoundUserException(String.format("User с id %s нет в базе", id));
+    public User get(Integer id) {
         return users.get(id);
     }
 
