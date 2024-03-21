@@ -1,9 +1,11 @@
-package ru.yandex.practicum.filmorate.model.user;
+package ru.yandex.practicum.filmorate.model;
 
 import lombok.*;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class User {
@@ -18,4 +20,5 @@ public class User {
     @NotNull(message = "Пусто значение даты дня рождения")
     @Past(message = "День рождения не валиден")
     private final LocalDate birthday;
+    private final Set<Integer> friends = new HashSet<>();
 }

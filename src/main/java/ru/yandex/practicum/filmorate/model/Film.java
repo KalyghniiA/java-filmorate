@@ -1,10 +1,12 @@
-package ru.yandex.practicum.filmorate.model.film;
+package ru.yandex.practicum.filmorate.model;
 
 import lombok.Data;
 import ru.yandex.practicum.filmorate.util.validateAnotation.dateRelease.ValidDateRelease;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Data
@@ -21,4 +23,5 @@ public class Film {
     @NotNull(message = "Передано пустое значение длительности фильма")
     @Positive(message = "Передано отрицательное значение длительности фильма")
     private final Integer duration;
+    private Set<Integer> likes = new HashSet<>();
 }

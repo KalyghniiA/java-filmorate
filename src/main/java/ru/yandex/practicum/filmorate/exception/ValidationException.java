@@ -1,7 +1,7 @@
-package ru.yandex.practicum.filmorate.exceptions;
+package ru.yandex.practicum.filmorate.exception;
 
-public class ValidationException extends Exception {
-    private String message;
+public class ValidationException extends RuntimeException {
+    private final String message;
 
     public ValidationException(String message) {
         this.message = message;
