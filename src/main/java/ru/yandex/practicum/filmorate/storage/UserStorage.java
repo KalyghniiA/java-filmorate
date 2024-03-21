@@ -7,11 +7,19 @@ import java.util.Collection;
 public interface UserStorage {
     User add(User user);
 
-    User delete(Integer id);
+    void delete(int id);
 
     User put(User user);
 
-    User get(Integer id);
+    User get(int id);
 
     Collection<User> getAll();
+
+    void addFriend(int id, int friendId);
+
+    void deleteFriend(int id, int friendId);
+
+    Collection<User> getFriends(int id);
+
+    Collection<User> getMutualFriends(int id, int otherId);
 }

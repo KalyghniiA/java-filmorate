@@ -7,17 +7,17 @@ import java.util.Collection;
 public interface FilmService {
     Film post(Film film);
 
-    Film get(Integer id);
+    Film get(int id);
 
-    void delete(Integer id);
+    void delete(int id);
 
     Collection<Film> getAll();
 
     Film put(Film film);
 
-    Film addLike(Integer idFilm, Integer idUser);
+    void addLike(int filmId, int userId);
 
-    void removeLike(Integer idFilm, Integer idUser);
+    void removeLike(int filmId, int userId);
 
     Collection<Film> getPopular(int count);
 }

@@ -14,21 +14,21 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handlerNotFoundException(NotFoundException e) {
-        log.error(e.getMessage());
+        log.error("Error", e);
         return new ErrorResponse("film", e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handlerValidationException(MethodArgumentNotValidException e) {
-        log.error(e.getMessage());
+        log.error("Error", e);
         return new ErrorResponse("film", e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handlerInternalException(RuntimeException e) {
-        log.error(e.getMessage());
+    public ErrorResponse handlerInternalException(Exception e) {
+        log.error("Error", e);
         return new ErrorResponse("film", e.getMessage());
     }
 }

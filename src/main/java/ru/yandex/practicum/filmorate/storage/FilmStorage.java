@@ -1,25 +1,23 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import ru.yandex.practicum.filmorate.exception.EmptyBodyException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
 
 public interface FilmStorage {
-    Film add(Film film) throws EmptyBodyException;
+    Film add(Film film);
 
-    Film delete(Integer id) throws NotFoundException, EmptyBodyException;
+    void delete(int id);
 
-    Film put(Film film) throws EmptyBodyException, NotFoundException;
+    Film put(Film film);
 
-    Film get(Integer id) throws NotFoundException, EmptyBodyException;
+    Film get(int id);
 
     Collection<Film> getAll();
 
-    Film addLike(Integer idFilm, Integer idUser);
+    void addLike(int idFilm, int idUser);
 
-    void removeLike(Integer idFilm, Integer idUser);
+    void removeLike(int idFilm, int idUser);
 
     Collection<Film> getPopular(int count);
 }

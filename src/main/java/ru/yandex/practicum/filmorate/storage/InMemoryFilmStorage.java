@@ -21,8 +21,8 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film delete(Integer id) {
-        return filmsStorage.remove(id);
+    public void delete(int id) {
+        filmsStorage.remove(id);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film get(Integer id) {
+    public Film get(int id) {
         return filmsStorage.get(id);
     }
 
@@ -42,14 +42,12 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film addLike(Integer idFilm, Integer idUser) {
-        Film film = filmsStorage.get(idFilm);
-        film.getLikes().add(idUser);
-        return film;
+    public void addLike(int idFilm, int idUser) {
+        filmsStorage.get(idFilm).getLikes().add(idUser);
     }
 
     @Override
-    public void removeLike(Integer idFilm, Integer idUser) {
+    public void removeLike(int idFilm, int idUser) {
         Film film = filmsStorage.get(idFilm);
         film.getLikes().remove(idUser);
     }

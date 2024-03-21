@@ -3,10 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.EmptyBodyException;
-import ru.yandex.practicum.filmorate.exception.EmptyDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.UserFriendException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -27,32 +24,40 @@ public class InUserService implements UserService {
     }
 
     @Override
-    public User get(Integer id) {
-        if (id == null) throw new EmptyDataException("Передано пустое значение");
+    public User get(int id) {
         User user = userStorage.get(id);
-        if (user == null) throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
+        if (user == null) {
+            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
+        }
         return userStorage.get(id);
     }
 
     @Override
     public User post(User user) {
-        if (user == null) throw new EmptyBodyException("Передано пустое поле");
+        if (user.getName() == null) {
+            user.setName(user.getLogin());
+        }
         return userStorage.add(user);
     }
 
     @Override
-    public void delete(Integer id) {
-        if (id == null) throw new EmptyBodyException("Передано пустое значение");
+    public void delete(int id) {
         User user = userStorage.get(id);
-        if (user == null) throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
+        if (user == null) {
+            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
+        }
         userStorage.delete(id);
     }
 
     @Override
     public User put(User user) {
-        if (user == null) throw new EmptyBodyException("Передано пустое значение");
+        if (user.getName() == null) {
+            user.setName(user.getLogin());
+        }
         User oldUser = userStorage.get(user.getId());
-        if (oldUser == null) throw new NotFoundException(String.format("Пользователя id %s нет в базе", user.getId()));
+        if (oldUser == null) {
+            throw new NotFoundException(String.format("Пользователя id %s нет в базе", user.getId()));
+        }
         return userStorage.put(user);
     }
 
@@ -62,88 +67,63 @@ public class InUserService implements UserService {
     }
 
     @Override
-    public User addFriend(Integer id, Integer friendId) {
-        if (id == null || friendId == null) throw new EmptyBodyException("Передано пустое значение");
-
+    public User addFriend(int id, int friendId) {
         User user = userStorage.get(id);
         User friend = userStorage.get(friendId);
 
-        if (user == null) throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
-        if (friend == null)  throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
-        if (user.getFriends().contains(friendId) && friend.getFriends().contains(id)) {
-            throw new UserFriendException(String.format("Пользователи с id %s и %s уже друзья", id, friendId));
+        if (user == null) {
+            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
-        user.getFriends().add(friendId);
-        friend.getFriends().add(id);
-
+        if (friend == null) {
+            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
+        }
+        if (user.getFriends().contains(friendId) && friend.getFriends().contains(id)) {
+            return user;
+        }
+        userStorage.addFriend(id, friendId);
         return user;
     }
 
     @Override
-    public void deleteFriend(Integer id, Integer friendId) {
-        if (id == null || friendId == null) throw new EmptyBodyException("Передано пустое значение");
-
+    public void deleteFriend(int id, int friendId) {
         User user = userStorage.get(id);
         User friend = userStorage.get(friendId);
 
-        if (user == null) throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
-        if (friend == null) throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
+        if (user == null) {
+            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
+        }
+        if (friend == null) {
+            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
+        }
         if (!user.getFriends().contains(friendId) || !friend.getFriends().contains(id)) {
             return;
-            //Проблема с тестами
-            //throw new UserFriendException(String.format("Пользователи с id %s и %s не друзья", id, friendId));
         }
 
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(id);
+        deleteFriend(id, friendId);
     }
 
     @Override
-    public Collection<User> getFriends(Integer id) {
-        if (id == null) throw new EmptyBodyException("Передано пустое значение");
-
+    public Collection<User> getFriends(int id) {
         User user = userStorage.get(id);
-        if (user == null) throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
-        Set<Integer> friendsId = user.getFriends();
-        List<User> friends = new ArrayList<>();
-
-        for (Integer friendId: friendsId) {
-            User friend = userStorage.get(friendId);
-            if (friend == null) {
-               //прошу обратить внимание, требуется ли выбрасывать ошибку?
-               log.debug(String.format("Друг c id %s удален из базы", friendId));
-               continue;
-            }
-            friends.add(userStorage.get(friendId));
+        if (user == null) {
+            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
 
-        return friends;
+        return userStorage.getFriends(id);
     }
 
     @Override
-    public Collection<User> getMutualFriends(Integer id, Integer otherId) {
-        if (id == null || otherId == null) throw new EmptyBodyException("Передано пустое значение");
-
+    public Collection<User> getMutualFriends(int id, int otherId) {
         User user = userStorage.get(id);
         User other = userStorage.get(otherId);
 
-        if (user == null) throw new NotFoundException(String.format("пользователя с id %s нет в базе", id));
-        if (other == null) throw new NotFoundException(String.format("пользователя с id %s нет в базе", otherId));
-
-        List<Integer> mutualFriendsId = user.getFriends().stream()
-                .filter(friendId -> other.getFriends().contains(friendId))
-                .collect(Collectors.toList());
-        List<User> mutualFriends = new ArrayList<>();
-        for (Integer friendId: mutualFriendsId) {
-            User friend = userStorage.get(friendId);
-            if (friend == null) {
-                //прошу обратить внимание, требуется ли выбрасывать ошибку
-                log.debug(String.format("пользователя с id %s нет в базе", friendId));
-                continue;
-            }
-            mutualFriends.add(friend);
+        if (user == null) {
+            throw new NotFoundException(String.format("пользователя с id %s нет в базе", id));
+        }
+        if (other == null) {
+            throw new NotFoundException(String.format("пользователя с id %s нет в базе", otherId));
         }
 
-        return mutualFriends;
+        return userStorage.getMutualFriends(id, otherId);
     }
 }

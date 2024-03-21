@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.InUserService;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 import java.util.Collection;
@@ -13,7 +14,7 @@ import java.util.Collection;
 @RestController
 @Slf4j
 public class UserController {
-    private final InUserService userService;
+    private final UserService userService;
 
     @Autowired
     public UserController(InUserService userService) {

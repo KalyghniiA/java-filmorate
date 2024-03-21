@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.InFilmService;
 
 import javax.validation.Valid;
@@ -13,7 +14,7 @@ import java.util.*;
 @RestController
 @Slf4j
 public class FilmController {
-    private final InFilmService filmService;
+    private final FilmService filmService;
 
     @Autowired
     public FilmController(InFilmService filmService) {
@@ -54,11 +55,10 @@ public class FilmController {
     }
 
     @PutMapping(value = "/films/{id}/like/{userId}")
-    public Film addLike(@PathVariable Integer id, @PathVariable Integer userId) {
+    public void addLike(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("Получен PUT запрос на добавление лайка");
-        Film film = filmService.addLike(id, userId);
+        filmService.addLike(id, userId);
         log.info(String.format("Фильм с id %s изменен", id));
-        return film;
     }
 
     @DeleteMapping(value = "/films/{id}/like/{userId}")
