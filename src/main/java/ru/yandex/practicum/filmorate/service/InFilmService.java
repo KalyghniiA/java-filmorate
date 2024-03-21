@@ -2,9 +2,9 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.EmptyDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -50,7 +50,7 @@ public class InFilmService implements FilmService {
     @Override
     public Film put(Film film) {
         if (film.getId() == null) {
-            throw new EmptyDataException("В переданных данных отсутствует параметр id");
+            throw new ValidationException("В переданных данных отсутствует параметр id");
         }
         //Просьба обратить внимание на проверку ниже, может данную логику убрать в storage??
         if (filmStorage.get(film.getId()) == null) {

@@ -55,6 +55,7 @@ public class UserController {
     }
 
     @DeleteMapping(value = "/users/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Integer id) {
         log.info("Получен DELETE на удаление пользователя");
         userService.delete(id);
@@ -70,6 +71,7 @@ public class UserController {
     }
 
     @DeleteMapping(value = "/users/{id}/friends/{friendId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFriendForUser(@PathVariable Integer id, @PathVariable Integer friendId) {
         log.info("Получен DELETE запрос на удаление друга у пользователя");
         userService.deleteFriend(id, friendId);

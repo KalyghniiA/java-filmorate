@@ -4,14 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -51,6 +48,9 @@ public class InUserService implements UserService {
 
     @Override
     public User put(User user) {
+        if (user.getId() == null) {
+            throw new ValidationException("В теле отсутствует параметр id");
+        }
         if (user.getName() == null) {
             user.setName(user.getLogin());
         }
@@ -99,7 +99,7 @@ public class InUserService implements UserService {
             return;
         }
 
-        deleteFriend(id, friendId);
+        userStorage.deleteFriend(id, friendId);
     }
 
     @Override
