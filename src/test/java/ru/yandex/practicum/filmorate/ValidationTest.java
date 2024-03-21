@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.util.Util;
+import ru.yandex.practicum.filmorate.util.validateAnotation.dateRelease.ValidDateReleaseValidator;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -72,7 +73,7 @@ public class ValidationTest {
 
     @Test
     public void testingValidationFilmDateRelease() {
-        Set<ConstraintViolation<Film>> violations = validator.validate(new Film("name", "description", Util.VALIDATION_DATE.minusYears(1), 100));
+        Set<ConstraintViolation<Film>> violations = validator.validate(new Film("name", "description", ValidDateReleaseValidator.VALIDATION_DATE.minusYears(1), 100));
 
         assertEquals(1, violations.size());
     }
