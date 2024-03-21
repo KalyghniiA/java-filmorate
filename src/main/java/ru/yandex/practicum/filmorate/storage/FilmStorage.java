@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.film;
+package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.exception.EmptyBodyException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -19,7 +19,7 @@ public interface FilmStorage {
 
     Film addLike(Integer idFilm, Integer idUser);
 
-    Film removeLike(Integer idFilm, Integer idUser);
+    void removeLike(Integer idFilm, Integer idUser);
 
     Collection<Film> getPopular(int count);
 }
