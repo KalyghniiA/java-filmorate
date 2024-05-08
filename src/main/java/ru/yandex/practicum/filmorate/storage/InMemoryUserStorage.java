@@ -41,19 +41,29 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public void addFriend(int id, int friendId) {
-        users.get(id).getFriends().add(friendId);
-        users.get(friendId).getFriends().add(id);
+        User friend = users.get(friendId);
+        boolean isFriend = friend.getFriends().containsKey(id);
+
+        users.get(id).getFriends().put(friendId, isFriend);
+        if (isFriend) {
+            friend.getFriends().put(id, true);
+        }
     }
 
     @Override
     public void deleteFriend(int id, int friendId) {
+        User friend = users.get(friendId);
+        boolean isFriend = friend.getFriends().containsKey(id);
+
         users.get(id).getFriends().remove(friendId);
-        users.get(friendId).getFriends().remove(id);
+        if (isFriend) {
+            friend.getFriends().put(id, false);
+        }
     }
 
     @Override
     public Collection<User> getFriends(int id) {
-        Set<Integer> friendsId = users.get(id).getFriends();
+        Set<Integer> friendsId = users.get(id).getFriends().keySet();
         List<User> friends = new ArrayList<>();
 
         for (int friendId: friendsId) {
@@ -67,8 +77,8 @@ public class InMemoryUserStorage implements UserStorage {
     public Collection<User> getMutualFriends(int id, int otherId) {
         User user = users.get(id);
         User other = users.get(otherId);
-        List<Integer> mutualFriendsId = user.getFriends().stream()
-                .filter(friendId -> other.getFriends().contains(friendId))
+        List<Integer> mutualFriendsId = user.getFriends().keySet().stream()
+                .filter(friendId -> other.getFriends().containsKey(friendId))
                 .collect(Collectors.toList());
         List<User> mutualFriends = new ArrayList<>();
         for (int friendId: mutualFriendsId) {

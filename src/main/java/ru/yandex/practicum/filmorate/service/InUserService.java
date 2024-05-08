@@ -77,9 +77,10 @@ public class InUserService implements UserService {
         if (friend == null) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
         }
-        if (user.getFriends().contains(friendId) && friend.getFriends().contains(id)) {
+        if (user.getFriends().containsKey(friendId)) {
             return user;
         }
+
         userStorage.addFriend(id, friendId);
         return user;
     }
@@ -95,9 +96,10 @@ public class InUserService implements UserService {
         if (friend == null) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
         }
-        if (!user.getFriends().contains(friendId) || !friend.getFriends().contains(id)) {
+        if (!user.getFriends().containsKey(friendId)) {
             return;
         }
+
 
         userStorage.deleteFriend(id, friendId);
     }

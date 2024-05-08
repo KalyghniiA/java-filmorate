@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.model;
 
 import lombok.Data;
+import ru.yandex.practicum.filmorate.util.filmEnum.Genre;
+import ru.yandex.practicum.filmorate.util.filmEnum.Rating;
 import ru.yandex.practicum.filmorate.util.validateAnotation.dateRelease.ValidDateRelease;
 
 import javax.validation.constraints.*;
@@ -23,5 +25,9 @@ public class Film {
     @NotNull(message = "Передано пустое значение длительности фильма")
     @Positive(message = "Передано отрицательное значение длительности фильма")
     private final Integer duration;
+    @NotNull(message = "Не указан жанр, либо указан неверно")
+    private final Genre genre;
+    @NotNull(message = "Не указан рейтинг, либо указан не верно")
+    private final Rating rating;
     private Set<Integer> likes = new HashSet<>();
 }

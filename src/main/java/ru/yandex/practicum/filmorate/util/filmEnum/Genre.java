@@ -1,20 +1,17 @@
-package ru.yandex.practicum.filmorate.util;
+package ru.yandex.practicum.filmorate.util.filmEnum;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
 public enum Genre {
-    COMEDY("Комедия"),
-    THRILLER("Ужасы"),
-    DRAMA("Драма"),
-    CARTOON("Мультфильм"),
-    DOCUMENTARY("Документальный"),
-    ACTION("Боевик");
+    COMEDY("COMEDY"),
+    THRILLER("THRILLER"),
+    DRAMA("DRAMA"),
+    CARTOON("CARTOON"),
+    DOCUMENTARY("DOCUMENTARY"),
+    ACTION("ACTION");
 
+    @Getter
     private String title;
-
-    Genre(String title) {
-        this.title = title;
-    }
-
-    public String getTitle() {
-        return title;
-    }
 }
