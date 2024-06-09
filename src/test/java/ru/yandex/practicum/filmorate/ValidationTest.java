@@ -13,7 +13,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ValidationTest {
-   /* private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     private final LocalDate testDate = LocalDate.of(1895, 12, 28);
 
     @Test
@@ -82,5 +82,5 @@ public class ValidationTest {
         Set<ConstraintViolation<Film>> violations = validator.validate(new Film("name", "description", LocalDate.now(), 0));
 
         assertEquals(1, violations.size());
-    }*/
+    }
 }
