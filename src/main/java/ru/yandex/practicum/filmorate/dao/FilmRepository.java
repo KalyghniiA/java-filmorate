@@ -3,15 +3,14 @@ package ru.yandex.practicum.filmorate.storage;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
+import java.util.Optional;
 
-public interface FilmStorage {
-    Film add(Film film);
+public interface FilmRepository {
+    Optional<Film> getById(int id);
+
+    Film save(Film film);
 
     void delete(int id);
-
-    Film put(Film film);
-
-    Film get(int id);
 
     Collection<Film> getAll();
 
@@ -19,5 +18,5 @@ public interface FilmStorage {
 
     void removeLike(int idFilm, int idUser);
 
-    Collection<Film> getPopular(int count);
+    Collection<Film> getTopPopular(int count);
 }
