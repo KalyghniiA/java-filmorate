@@ -1,8 +1,12 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-public class Rating {
+@AllArgsConstructor(onConstructor = @__(@JsonCreator))
+public class Mpa {
     private final int id;
+    private String name;
 }

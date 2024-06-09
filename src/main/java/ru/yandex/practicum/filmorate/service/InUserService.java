@@ -2,31 +2,31 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
 
 @Service
 @Slf4j
 public class InUserService implements UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userStorage;
 
     @Autowired
-    public InUserService(UserStorage userStorage) {
+    public InUserService(UserRepository userStorage) {
         this.userStorage = userStorage;
     }
 
     @Override
     public User get(int id) {
-        User user = userStorage.get(id);
-        if (user == null) {
+        try {
+            return userStorage.getById(id);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
-        return userStorage.get(id);
     }
 
     @Override
@@ -34,12 +34,12 @@ public class InUserService implements UserService {
         if (user.getName() == null) {
             user.setName(user.getLogin());
         }
-        return userStorage.add(user);
+        return userStorage.save(user);
     }
 
     @Override
     public void delete(int id) {
-        User user = userStorage.get(id);
+        User user = userStorage.getById(id);
         if (user == null) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
@@ -49,16 +49,17 @@ public class InUserService implements UserService {
     @Override
     public User put(User user) {
         if (user.getId() == null) {
-            throw new ValidationException("В теле отсутствует параметр id");
+            post(user);
         }
         if (user.getName() == null) {
             user.setName(user.getLogin());
         }
-        User oldUser = userStorage.get(user.getId());
-        if (oldUser == null) {
+        try {
+            userStorage.getById(user.getId());
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя id %s нет в базе", user.getId()));
         }
-        return userStorage.put(user);
+        return userStorage.update(user);
     }
 
     @Override
@@ -68,61 +69,66 @@ public class InUserService implements UserService {
 
     @Override
     public User addFriend(int id, int friendId) {
-        User user = userStorage.get(id);
-        User friend = userStorage.get(friendId);
-
-        if (user == null) {
+        User user;
+        try {
+            user = userStorage.getById(id);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
-        if (friend == null) {
+        try {
+            userStorage.getById(friendId);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
         }
-        if (user.getFriends().containsKey(friendId)) {
+
+        if (user.getFriends().contains(friendId)) {
             return user;
         }
 
         userStorage.addFriend(id, friendId);
-        return user;
+        return userStorage.getById(id);
     }
 
     @Override
     public void deleteFriend(int id, int friendId) {
-        User user = userStorage.get(id);
-        User friend = userStorage.get(friendId);
-
-        if (user == null) {
+        try {
+            userStorage.getById(id);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
-        if (friend == null) {
+        try {
+            userStorage.getById(friendId);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId));
         }
-        if (!user.getFriends().containsKey(friendId)) {
+
+        if (!userStorage.checkIsFriends(id, friendId)) {
             return;
         }
-
 
         userStorage.deleteFriend(id, friendId);
     }
 
     @Override
     public Collection<User> getFriends(int id) {
-        User user = userStorage.get(id);
-        if (user == null) {
+        try {
+            userStorage.getById(id);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
-
         return userStorage.getFriends(id);
     }
 
     @Override
     public Collection<User> getMutualFriends(int id, int otherId) {
-        User user = userStorage.get(id);
-        User other = userStorage.get(otherId);
-
-        if (user == null) {
+        try {
+            userStorage.getById(id);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("пользователя с id %s нет в базе", id));
         }
-        if (other == null) {
+        try {
+            userStorage.getById(otherId);
+        } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("пользователя с id %s нет в базе", otherId));
         }
 

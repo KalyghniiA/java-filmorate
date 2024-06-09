@@ -18,9 +18,11 @@ public class ErrorHandler {
         return new ErrorResponse("film", e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler({MethodArgumentNotValidException.class,
+            DuplicateDataException.class,
+            InvalidIdParameterException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handlerValidationException(MethodArgumentNotValidException e) {
+    public ErrorResponse handlerValidationException(RuntimeException e) {
         log.error("Error", e);
         return new ErrorResponse("film", e.getMessage());
     }
@@ -31,4 +33,5 @@ public class ErrorHandler {
         log.error("Error", e);
         return new ErrorResponse("film", e.getMessage());
     }
+
 }
