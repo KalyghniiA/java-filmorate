@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -9,13 +8,9 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.mappers.UserRowMapper;
-import ru.yandex.practicum.filmorate.exception.DuplicateDataException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -23,7 +18,7 @@ public class JdbcUserRepository implements UserRepository {
     private final NamedParameterJdbcOperations jdbc;
 
     @Override
-    public User save(User user) {
+    public Optional<User> save(User user) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         Map<String, Object> param = Map.of(
                 "login", user.getLogin(),
@@ -36,13 +31,10 @@ public class JdbcUserRepository implements UserRepository {
                 VALUES ( :login, :name, :email, :birthday);
                 """;
 
-        try {
-            jdbc.update(sql, new MapSqlParameterSource().addValues(param), keyHolder, new String[]{"user_id"});
-        } catch (DuplicateKeyException e) {
-            throw new DuplicateDataException("Указанный логин или почта уже зарегистрирована в базе");
-        }
+        jdbc.update(sql, new MapSqlParameterSource().addValues(param), keyHolder, new String[]{"user_id"});
+
         user.setId(keyHolder.getKeyAs(Integer.class));
-        return user;
+        return Optional.ofNullable(user);
     }
 
     @Override
@@ -53,11 +45,7 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     @Override
-    public User update(User user) {
-        if (user.getId() == null) {
-            save(user);
-        }
-
+    public Optional<User> update(User user) {
         Map<String, Object> param = Map.of(
                 "user_id", user.getId(),
                 "login", user.getLogin(),
@@ -76,11 +64,11 @@ public class JdbcUserRepository implements UserRepository {
                 """;
 
         jdbc.update(sql, param);
-        return user;
+        return Optional.ofNullable(user);
     }
 
     @Override
-    public User getById(int userId) {
+    public Optional<User> getById(int userId) {
         Map<String, Object> param = Map.of("user_id", userId);
         String sql = """
                 SELECT USER_ID, LOGIN, NAME, EMAIL, BIRTHDAY
@@ -95,11 +83,11 @@ public class JdbcUserRepository implements UserRepository {
             user.getFriends().add(rowSetFriends.getInt("FRIEND_ID"));
         }
 
-        return user;
+        return Optional.ofNullable(user);
     }
 
     @Override
-    public Collection<User> getAll() {
+    public List<User> getAll() {
         String sql = "SELECT USER_ID, LOGIN, NAME, EMAIL, BIRTHDAY FROM USERS;";
         String sqlFriends = "SELECT FRIEND_ID FROM FRIENDS WHERE USER_ID = :user_id;";
 
@@ -136,7 +124,7 @@ public class JdbcUserRepository implements UserRepository {
                 "friend_id", friendId
         );
         jdbc.update(sql, param);
-        return getById(userId);
+        return getById(userId).orElseThrow();
     }
 
     @Override
@@ -150,21 +138,21 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     @Override
-    public Collection<User> getFriends(int userId) {
+    public List<User> getFriends(int userId) {
         String sql = "SELECT FRIEND_ID AS ID FROM FRIENDS WHERE USER_ID = :user_id;";
         Map<String, Object> param = Map.of("user_id", userId);
         List<User> users = new ArrayList<>();
 
         SqlRowSet rowSet = jdbc.queryForRowSet(sql, param);
         while (rowSet.next()) {
-            users.add(getById(rowSet.getInt("ID")));
+            users.add(getById(rowSet.getInt("ID")).orElseThrow());
         }
 
         return users;
     }
 
     @Override
-    public Collection<User> getMutualFriends(int userId, int otherId) {
+    public List<User> getMutualFriends(int userId, int otherId) {
         String sql = """
                 SELECT FRIEND_ID AS ID
                 FROM FRIENDS
@@ -178,7 +166,7 @@ public class JdbcUserRepository implements UserRepository {
         List<User> users = new ArrayList<>();
         SqlRowSet rowSet = jdbc.queryForRowSet(sql, param);
         while (rowSet.next()) {
-            users.add(getById(rowSet.getInt("ID")));
+            users.add(getById(rowSet.getInt("ID")).orElseThrow());
         }
 
         return users;

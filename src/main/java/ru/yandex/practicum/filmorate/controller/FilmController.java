@@ -5,7 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Parameter;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 
@@ -79,33 +80,33 @@ public class FilmController {
     }
 
     @GetMapping("/genres")
-    public Collection<Parameter> getGenres() {
+    public Collection<Genre> getGenres() {
         log.info("Получен GET запрос на получение списка жанров");
-        Collection<Parameter> genres = filmService.getGenres();
+        Collection<Genre> genres = filmService.getGenres();
         log.info("Отправлены жанры");
         return genres;
     }
 
     @GetMapping("/genres/{id}")
-    public Parameter getGenreById(@PathVariable Integer id) {
+    public Genre getGenreById(@PathVariable Integer id) {
         log.info(String.format("Получен GET запрос на получение имени жанра с id %s", id));
-        Parameter parameter = filmService.getGenreById(id);
+        Genre parameter = filmService.getGenreById(id);
         log.info(String.format("Отправлено имя жанра с id %s", id));
         return parameter;
     }
 
     @GetMapping("/mpa")
-    public Collection<Parameter> getRating() {
+    public Collection<Mpa> getRating() {
         log.info("Получен GET запрос на получение списка рейтингов");
-        Collection<Parameter> ratings = filmService.getRatings();
+        Collection<Mpa> ratings = filmService.getRatings();
         log.info("Отправлены рейтинги");
         return ratings;
     }
 
     @GetMapping("/mpa/{id}")
-    public Parameter getRatingById(@PathVariable Integer id) {
+    public Mpa getRatingById(@PathVariable Integer id) {
         log.info(String.format("Получен GET запрос на получение рейтинга c id %s", id));
-        Parameter parameter = filmService.getRatingById(id);
+        Mpa parameter = filmService.getRatingById(id);
         log.info(String.format("Отправлено название рейтинга c id  %s", id));
         return parameter;
     }

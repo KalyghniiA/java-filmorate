@@ -2,20 +2,18 @@ package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dao.mappers.FilmRowMapper;
 
-import ru.yandex.practicum.filmorate.dao.mappers.MpaRowMapper;
-import ru.yandex.practicum.filmorate.dao.mappers.ParameterRowMapper;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.Parameter;
 
 
 import java.util.*;
@@ -28,21 +26,45 @@ public class JdbcFilmRepository implements FilmRepository {
     @Override
     public Optional<Film> getById(int id) {
         String sql = """
-                SELECT FILM_ID,
-                       FILMS.NAME AS NAME,
+                SELECT FILMS.FILM_ID AS ID,
+                       FILMS.NAME AS FILM_NAME,
                        DESCRIPTION,
                        RELEASE_DATE,
                        DURATION,
                        RATING AS RATING_ID,
-                       RATING.NAME AS RATING_NAME
+                       RATINGS.NAME AS RATING_NAME,
+                       GENRES.GENRE_ID AS GENRE_ID,
+                       GENRES.NAME AS GENRE_NAME
                 FROM FILMS
-                JOIN RATING ON FILMS.RATING = RATING.RATING_ID
-                WHERE FILM_ID = :film_id;
+                JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                WHERE FILMS.FILM_ID = :film_id
+                order by GENRE_ID
                 """;
-        Film film = jdbc.queryForObject(sql, Map.of("film_id", id), new FilmRowMapper());
-        film.getGenres().addAll(getGenresForFilm(film.getId()));
-        loadLikePerson(film);//уточнение
-        return Optional.of(film);
+        Map<String, Object> param = Map.of("film_id", id);
+        SqlRowSet rs = jdbc.queryForRowSet(sql, param);
+        Film film = null;
+        if (rs.next()) {
+            film = new Film(
+                    rs.getString("FILM_NAME"),
+                    rs.getString("DESCRIPTION"),
+                    rs.getDate("RELEASE_DATE").toLocalDate(),
+                    rs.getInt("DURATION")
+            );
+            film.setId(rs.getInt("ID"));
+            film.setMpa(new Mpa(rs.getInt("RATING_ID"), rs.getString("RATING_NAME")));
+            int idGenre = rs.getInt("GENRE_ID");
+            if (idGenre != 0) {
+                film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
+                while (rs.next()) {
+                    film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
+                }
+            }
+        }
+
+
+        return Optional.ofNullable(film);
 
     }
 
@@ -61,28 +83,16 @@ public class JdbcFilmRepository implements FilmRepository {
         VALUES (:name, :description, :releaseDate, :duration, :idRating);
         """;
 
+
         jdbc.update(sql, new MapSqlParameterSource().addValues(paramFilm), keyHolder, new String[]{"film_id"});
         film.setId(keyHolder.getKeyAs(Integer.class));
-        film.getGenres().forEach(genre -> {
-                if (!checkDuplicateGenre(film.getId(), genre.getId())) {
-                    String sqlGenre = "INSERT INTO GENRES(FILM_ID, GENRE_ID) VALUES ( :film_id, :genre_id );";
-                    Map<String, Object> paramGenre = Map.of("film_id", film.getId(), "genre_id", genre.getId());
-                    jdbc.update(sqlGenre, paramGenre);
-                }
-            }
-        );
-
+        saveGenresForFilm(film.getId(), film.getGenres());
 
         return film;
     }
 
     @Override
     public Film update(Film film) {
-        if (film.getId() == null) {
-            return save(film);
-        }
-
-
         Map<String, Object> param = Map.of(
                 "film_id", film.getId(),
                 "name", film.getName(),
@@ -103,11 +113,7 @@ public class JdbcFilmRepository implements FilmRepository {
                 """;
 
         jdbc.update(sql, param);
-        film.getGenres().forEach(genre -> {
-            String sqlGenre = "MERGE INTO GENRES(film_id, genre_id) VALUES ( :film_id, :genre_id );";
-            Map<String, Object> paramGenre = Map.of("film_id", film.getId(), "genre_id", genre.getId());
-            jdbc.update(sqlGenre, paramGenre);
-        });
+        saveGenresForFilm(film.getId(), film.getGenres());
 
         return film;
     }
@@ -119,47 +125,45 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public Collection<Film> getAll() {
+    public List<Film> getAll() {
          String sql = """
-                 SELECT FILM_ID,
-                        NAME,
+                 SELECT FILMS.FILM_ID AS ID,
+                        FILMS.NAME AS FILM_NAME,
                         DESCRIPTION,
                         RELEASE_DATE,
                         DURATION,
-                        RATING
+                        FILMS.RATING AS RATING_ID,
+                        RATINGS.NAME AS RATING_NAME,
+                        GENRES.GENRE_ID AS GENRE_ID,
+                        GENRES.NAME AS GENRE_NAME
                  FROM FILMS
+                 JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                 LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                 JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID;
                  """;
         return getFilms(sql, Map.of());
     }
 
     @Override
-    public void addLike(int filmId, int userId) {
-        Map<String, Object> param = Map.of("id_film", filmId, "id_user", userId);
-        String sql = "INSERT INTO LIKES(film_id, user_id) VALUES ( :id_film, :id_user );";
-        jdbc.update(sql, param);
-    }
-
-    @Override
-    public void removeLike(int filmId, int userId) {
-        Map<String, Object> param = Map.of("id_film", filmId, "id_user", userId);
-        String sql = "DELETE FROM LIKES WHERE FILM_ID = :id_film AND USER_ID = :id_user;";
-        jdbc.update(sql, param);
-    }
-
-    @Override
-    public Collection<Film> getTopPopular(int count) {
+    public List<Film> getTopPopular(int count) {
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
-                    FILMS.NAME AS NAME,
+                    FILMS.NAME AS FILM_NAME,
                     DESCRIPTION,
                     RELEASE_DATE,
                     DURATION,
-                    RATING,
+                    RATING AS RATING_ID,
+                    RATINGS.NAME AS RATING_NAME,
+                    GENRES.GENRE_ID AS GENRE_ID,
+                    GENRES.NAME AS GENRE_NAME,
                     COUNT(LIKES.FILM_ID) AS LIKE_COUNT
                 FROM FILMS
+                         JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                         LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                GROUP BY ID
+                GROUP BY FILM_GENRES.GENRE_ID, ID
                 ORDER BY LIKE_COUNT DESC
                 LIMIT :count;
                 """;
@@ -169,35 +173,22 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Parameter> getGenres() {
-        String sql = "SELECT GENRE_ID AS ID, NAME FROM GENRES_TITLE;";
-        List<Parameter> genres = new ArrayList<>();
-        SqlRowSet rs = jdbc.queryForRowSet(sql, Map.of());
-        while (rs.next()) {
-           genres.add(new Parameter(rs.getInt("ID"), rs.getString("NAME")));
-        }
-
-        return genres;
-    }
-
-    @Override
-    public Parameter getGenreById(int genreId) {
-        String sql = "SELECT GENRE_ID, NAME FROM GENRES_TITLE WHERE GENRE_ID = :genre_id";
-        Map<String, Object> param = Map.of("genre_id", genreId);
-        return jdbc.queryForObject(sql, param, new ParameterRowMapper());
-    }
-
-    @Override
-    public Collection<Film> getFilmsByGenre(int genreId) {
+    public List<Film> getFilmsByGenre(int genreId) {
         String sql = """
-                SELECT FILM_ID,
-                       NAME,
+                SELECT FILMS.FILM_ID AS ID,
+                       FILMS.NAME AS FILM_NAME,
                        DESCRIPTION,
                        RELEASE_DATE,
                        DURATION,
-                       RATING
+                       RATING AS RATING_ID,
+                       RATINGS.NAME AS RATING_NAME,
+                       GENRES.GENRE_ID AS GENRE_ID,
+                       GENRES.NAME AS GENRE_NAME
                 FROM FILMS
-                WHERE FILM_ID IN (SELECT FILM_ID FROM GENRES WHERE GENRE_ID = :genre_id);
+                JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                WHERE FILMS.FILM_ID IN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = :genre_id);
                 """;
         Map<String, Object> param = Map.of("genre_id", genreId);
 
@@ -205,33 +196,21 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Parameter> getRatings() {
-        String sql = "SELECT RATING_ID AS ID, NAME FROM RATING;";
-        List<Parameter> ratings = new ArrayList<>();
-        SqlRowSet rs = jdbc.queryForRowSet(sql, Map.of());
-        while (rs.next()) {
-            ratings.add(new Parameter(rs.getInt("ID"), rs.getString("NAME")));
-        }
-        return ratings;
-    }
-
-    @Override
-    public Parameter getRatingById(int ratingId) {
-        String sql = "SELECT RATING_ID, NAME FROM RATING WHERE RATING_ID = :rating_id";
-        Map<String, Object> param = Map.of("rating_id", ratingId);
-        return jdbc.queryForObject(sql, param, new ParameterRowMapper());
-    }
-
-    @Override
-    public Collection<Film> getFilmsByRating(int ratingId) {
+    public List<Film> getFilmsByRating(int ratingId) {
         String sql = """
-                SELECT FILM_ID,
-                       FILMS.NAME AS NAME,
+                SELECT FILMS.FILM_ID AS ID,
+                       FILMS.NAME AS FILM_NAME,
                        DESCRIPTION,
                        RELEASE_DATE,
                        DURATION,
-                       RATING
+                       RATING AS RATING_ID,
+                       RATINGS.NAME AS RATING_NAME,
+                       GENRES.GENRE_ID AS GENRE_ID,
+                       GENRES.NAME AS GENRE_NAME
                 FROM FILMS
+                JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                 WHERE RATING = :rating_id;
                 """;
         Map<String, Object> param = Map.of("rating_id", ratingId);
@@ -239,130 +218,60 @@ public class JdbcFilmRepository implements FilmRepository {
         return getFilms(sql, param);
     }
 
-    @Override
-    public boolean checkAvailabilityFilm(int filmId) {
-        String sql = "SELECT EXISTS(SELECT FILM_ID FROM FILMS WHERE FILM_ID = :film_id);";
-        Map<String, Object> param = Map.of("film_id", filmId);
-        return jdbc.queryForObject(sql, param, Boolean.class);
+    private List<Film> getFilms(String sql, Map<String, Object> param) {
+       Map<Integer, Film> films = new LinkedHashMap<>();
+
+       SqlRowSet rs = jdbc.queryForRowSet(sql, param);
+       while (rs.next()) {
+           Integer filmId = rs.getInt("FILM_ID");
+           if (films.containsKey(filmId)) {
+               films.get(filmId)
+                       .getGenres()
+                       .add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
+               continue;
+           }
+
+
+           Film film = new Film(
+                   rs.getString("FILM_NAME"),
+                   rs.getString("DESCRIPTION"),
+                   rs.getDate("RELEASE_DATE").toLocalDate(),
+                   rs.getInt("DURATION")
+           );
+           film.setId(filmId);
+           film.setMpa(new Mpa(rs.getInt("RATING_ID"), rs.getString("RATING_NAME")));
+           film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
+           films.put(filmId, film);
+
+       }
+
+       return films.values().stream().toList();
     }
 
-    @Override
-    public boolean checkAvailabilityLike(int filmId, int userId) {
-        Map<String, Object> param = Map.of("id_film", filmId, "id_user", userId);
-        String sqlAvailabilityCheck = """
-                SELECT EXISTS(
-                    SELECT FILM_ID, USER_ID from LIKES where FILM_ID = :id_film AND USER_ID = :id_user
-                ) AS availability_check
-                """;
-        return jdbc.queryForObject(sqlAvailabilityCheck, param, Boolean.class);
-    }
+    private void saveGenresForFilm(int filmId, Set<Genre> genres) {
+        Map<String, Object>[] batchOfInputs = new HashMap[genres.size()];
+        String sqlDelete = "DELETE FROM FILM_GENRES WHERE FILM_ID = :film_id AND GENRE_ID = :genre_id;";
+        String sqlInsert = "INSERT INTO FILM_GENRES(FILM_ID, GENRE_ID) VALUES ( :film_id, :genre_id );";
+        String sqlInsertNull = "INSERT INTO FILM_GENRES(FILM_ID, GENRE_ID) VALUES ( :film_id, NULL );";
+        int count = 0;
 
-    @Override
-    public boolean checkAvailabilityGenreId(List<Genre> genres) {
+        if (genres.isEmpty()) {
+            jdbc.update(sqlInsertNull, Map.of("film_id", filmId));
+            return;
+        }
+
         for (Genre genre: genres) {
-            String sql = "SELECT EXISTS(SELECT NAME FROM GENRES_TITLE WHERE GENRE_ID = :genre_id);";
-            Map<String, Object> param = Map.of("genre_id", genre.getId());
-            if (!jdbc.queryForObject(sql, param, Boolean.class)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public boolean checkAvailabilityGenreId(int genreId) {
-        String sql = "SELECT EXISTS(SELECT NAME FROM GENRES_TITLE WHERE GENRE_ID = :genre_id);";
-        Map<String, Object> param = Map.of("genre_id", genreId);
-        return jdbc.queryForObject(sql, param, Boolean.class);
-    }
-
-    @Override
-    public boolean checkAvailabilityRatingId(Mpa rating) {
-        String sql = "SELECT EXISTS(SELECT NAME FROM RATING WHERE RATING_ID = :rating_id);";
-        Map<String, Object> param = Map.of("rating_id", rating.getId());
-        return jdbc.queryForObject(sql, param, Boolean.class);
-    }
-
-    @Override
-    public boolean checkAvailabilityRatingId(int ratingId) {
-        String sql = "SELECT EXISTS(SELECT NAME FROM RATING WHERE RATING_ID = :rating_id);";
-        Map<String, Object> param = Map.of("rating_id", ratingId);
-        return jdbc.queryForObject(sql, param, Boolean.class);
-    }
-
-    private Film loadLikePerson(Film film) {
-        String sql = "SELECT USER_ID FROM LIKES WHERE FILM_ID = :id_film ;";
-        Map<String, Object> param = Map.of("id_film", film.getId());
-
-        SqlRowSet rowSet = jdbc.queryForRowSet(sql, param);
-        while (rowSet.next()) {
-            film.getLikes().add(rowSet.getInt("USER_ID"));
-        }
-        return film;
-    }
-
-    private Integer getRatingId(String ratingData) {
-        String sqlGetRatingId = """
-                SELECT RATING_ID FROM RATING WHERE NAME = :filmRating
-                """;
-        return jdbc.queryForObject(sqlGetRatingId, Map.of("filmRating", ratingData), Integer.class);
-    }
-
-    private Integer getGenreId(String  genreData) {
-        String sqlGetGenreId = """
-                SELECT GENRE_ID FROM GENRES WHERE NAME = :filmGenre
-                """;
-        return jdbc.queryForObject(sqlGetGenreId, Map.of("filmGenre", genreData), Integer.class);
-    }
-
-    private List<Genre> getGenresForFilm(int filmId) {
-        String sql = """
-            SELECT GENRES.GENRE_ID AS ID, GENRES_TITLE.NAME AS NAME
-            FROM GENRES
-            JOIN GENRES_TITLE ON GENRES.GENRE_ID = GENRES_TITLE.GENRE_ID
-            WHERE FILM_ID = :film_id;
-            """;
-        Map<String, Object> param = Map.of("film_id", filmId);
-        List<Genre> genres = new ArrayList<>();
-
-        SqlRowSet rs = jdbc.queryForRowSet(sql, param);
-        while (rs.next()) {
-            genres.add(new Genre(rs.getInt("ID"), rs.getString("NAME")));
+            Map<String, Object> map = new HashMap<>();
+            map.put("film_id", filmId);
+            map.put("genre_id", genre.getId());
+            batchOfInputs[count++] = map;
         }
 
-        return genres;
-    }
-
-    private Mpa getRatingForFilm(int ratingId) {
-        String sql = "SELECT NAME FROM RATING WHERE RATING_ID = :rating_id";
-        Map<String, Object> param = Map.of("rating_id", ratingId);
-        return jdbc.queryForObject(sql, param, new MpaRowMapper());
-    }
-
-    private Collection<Film> getFilms(String sql, Map<String, Object> param) {
-        List<Film> films = new ArrayList<>();
-
-        SqlRowSet rs = jdbc.queryForRowSet(sql, param);
-        //Уточнение, как использовать тут маппер? требует RowSet
-        while (rs.next()) {
-            Film film = new Film(
-                    rs.getString("NAME"),
-                    rs.getString("DESCRIPTION"),
-                    rs.getDate("RELEASE_DATE").toLocalDate(),
-                    rs.getInt("DURATION")
-            );
-            film.setId(rs.getInt("FILM_ID"));
-            film.setGenres(getGenresForFilm(film.getId()));
-            film.setMpa(new Mpa(rs.getInt("RATING"), null));
-            films.add(loadLikePerson(film));
+        jdbc.batchUpdate(sqlDelete, batchOfInputs);
+        try {
+            jdbc.batchUpdate(sqlInsert, batchOfInputs);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ValidationException("Один из жанров отсутствует в базе");
         }
-
-        return films;
-    }
-
-    private boolean checkDuplicateGenre(int filmId, int genreId) {
-        String sql = "SELECT EXISTS(SELECT FILM_ID FROM GENRES WHERE FILM_ID = :film_id AND GENRE_ID = :genre_id);";
-        Map<String, Object> param = Map.of("film_id", filmId, "genre_id", genreId);
-        return jdbc.queryForObject(sql, param, Boolean.class);
     }
 }

@@ -1,11 +1,7 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.Parameter;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,35 +14,12 @@ public interface FilmRepository {
 
     void delete(int id);
 
-    Collection<Film> getAll();
+    List<Film> getAll();
 
-    void addLike(int idFilm, int idUser);
+    List<Film> getTopPopular(int count);
 
-    void removeLike(int idFilm, int idUser);
+    List<Film> getFilmsByGenre(int genreId);
 
-    Collection<Film> getTopPopular(int count);
+    List<Film> getFilmsByRating(int ratingId);
 
-    List<Parameter> getGenres();
-
-    Parameter getGenreById(int genreId);
-
-    Collection<Film> getFilmsByGenre(int genreId);
-
-    List<Parameter> getRatings();
-
-    Parameter getRatingById(int ratingId);
-
-    Collection<Film> getFilmsByRating(int ratingId);
-
-    boolean checkAvailabilityFilm(int filmId);
-
-    boolean checkAvailabilityLike(int filmId, int userId);
-
-    boolean checkAvailabilityGenreId(List<Genre> genres);
-
-    boolean checkAvailabilityGenreId(int genreId);
-
-    boolean checkAvailabilityRatingId(Mpa rating);
-
-    boolean checkAvailabilityRatingId(int ratingIg);
 }

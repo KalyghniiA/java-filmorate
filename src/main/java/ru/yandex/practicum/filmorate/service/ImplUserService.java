@@ -12,18 +12,18 @@ import java.util.Collection;
 
 @Service
 @Slf4j
-public class InUserService implements UserService {
+public class ImplUserService implements UserService {
     private final UserRepository userStorage;
 
     @Autowired
-    public InUserService(UserRepository userStorage) {
+    public ImplUserService(UserRepository userStorage) {
         this.userStorage = userStorage;
     }
 
     @Override
     public User get(int id) {
         try {
-            return userStorage.getById(id);
+            return userStorage.getById(id).orElseThrow();
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
@@ -34,12 +34,12 @@ public class InUserService implements UserService {
         if (user.getName() == null) {
             user.setName(user.getLogin());
         }
-        return userStorage.save(user);
+        return userStorage.save(user).orElseThrow();
     }
 
     @Override
     public void delete(int id) {
-        User user = userStorage.getById(id);
+        User user = userStorage.getById(id).orElseThrow();
         if (user == null) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
@@ -59,7 +59,7 @@ public class InUserService implements UserService {
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя id %s нет в базе", user.getId()));
         }
-        return userStorage.update(user);
+        return userStorage.update(user).orElseThrow();
     }
 
     @Override
@@ -71,7 +71,7 @@ public class InUserService implements UserService {
     public User addFriend(int id, int friendId) {
         User user;
         try {
-            user = userStorage.getById(id);
+            user = userStorage.getById(id).orElseThrow();
         } catch (EmptyResultDataAccessException e) {
             throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
         }
@@ -86,7 +86,7 @@ public class InUserService implements UserService {
         }
 
         userStorage.addFriend(id, friendId);
-        return userStorage.getById(id);
+        return userStorage.getById(id).orElseThrow();
     }
 
     @Override

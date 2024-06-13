@@ -4,17 +4,17 @@ create table if not exists FRIENDS
     FRIEND_ID INTEGER not null
 );
 
-create table if not exists GENRES_TITLE
+create table if not exists GENRES
 (
     GENRE_ID INTEGER                not null
         primary key,
     NAME     CHARACTER VARYING(255) not null
 );
 
-create table if not exists GENRES
+create table if not exists FILM_GENRES
 (
     FILM_ID INTEGER NOT NULL,
-    GENRE_ID INTEGER NOT NULL
+    GENRE_ID INTEGER
 );
 
 create table if not exists LIKES
@@ -23,7 +23,7 @@ create table if not exists LIKES
     USER_ID INTEGER not null
 );
 
-create table if not exists RATING
+create table if not exists RATINGS
 (
     RATING_ID INTEGER               not null
         primary key,
@@ -40,7 +40,7 @@ create table if not exists FILMS
     DURATION     INTEGER                 not null,
     RATING       INTEGER,
     constraint "FILMS_RATING_RATING_ID_fk"
-        foreign key (RATING) references RATING
+        foreign key (RATING) references RATINGS
 );
 
 create table if not exists USERS
@@ -52,5 +52,5 @@ create table if not exists USERS
     EMAIL    CHARACTER VARYING(255) not null,
     BIRTHDAY DATE                   not null,
     constraint "USERS_pk"
-        unique (LOGIN, EMAIL)
+        unique (EMAIL)
 );

@@ -1,7 +1,8 @@
 package ru.yandex.practicum.filmorate.service;
 
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Parameter;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 
 import java.util.Collection;
@@ -25,13 +26,13 @@ public interface FilmService {
 
     Collection<Film> getPopular(int count);
 
-    List<Parameter> getGenres();
+    List<Genre> getGenres();
 
-    List<Parameter> getRatings();
+    List<Mpa> getRatings();
 
-    Parameter getGenreById(int genreId);
+    Genre getGenreById(int genreId);
 
-    Parameter getRatingById(int ratingId);
+    Mpa getRatingById(int ratingId);
 
     Collection<Film> getOfRating(int ratingId);
 
