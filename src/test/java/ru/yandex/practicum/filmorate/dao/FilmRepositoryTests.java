@@ -34,7 +34,7 @@ public class FilmRepositoryTests {
 
         Film film = filmRepository.save(newFilm);
         assertThat(film).hasFieldOrPropertyWithValue("name", "New Film");
-        assertThat(film).hasFieldOrPropertyWithValue("description", "description" );
+        assertThat(film).hasFieldOrPropertyWithValue("description", "description");
         assertThat(film).hasFieldOrPropertyWithValue("releaseDate", date);
         assertThat(film).hasFieldOrPropertyWithValue("duration", 100);
     }
