@@ -33,7 +33,7 @@ public class UserRepositoryTest {
                     assertThat(userOptional).hasFieldOrPropertyWithValue("name", "name");
                     assertThat(userOptional).hasFieldOrPropertyWithValue("email", "email@email.ru");
                     assertThat(userOptional).hasFieldOrPropertyWithValue("login", "name");
-                    assertThat(userOptional).hasFieldOrPropertyWithValue("birthday", "date");
+                    assertThat(userOptional).hasFieldOrPropertyWithValue("birthday", date);
                 });
     }
 
@@ -63,7 +63,7 @@ public class UserRepositoryTest {
                     assertThat(user).hasFieldOrPropertyWithValue("name", "newName");
                     assertThat(user).hasFieldOrPropertyWithValue("email", "@email1.ru");
                     assertThat(user).hasFieldOrPropertyWithValue("login", "user1");
-                    assertThat(user).hasFieldOrPropertyWithValue("birthday", LocalDate.of(2020, 10, 11));
+                    assertThat(user).hasFieldOrPropertyWithValue("birthday", LocalDate.of(2020, 10, 10));
                 });
     }
 

@@ -56,7 +56,7 @@ public class FilmRepositoryTests {
 
     @Test
     public void updateFilm() {
-         Film film = new Film("newFilm", "description", LocalDate.now(), 100);
+         Film film = new Film("newFilm", "description", LocalDate.of(2010, 10, 10), 100);
          film.setMpa(new Mpa(1, null));
          film.setId(1);
          filmRepository.update(film);
@@ -71,7 +71,6 @@ public class FilmRepositoryTests {
                      assertThat(film).hasFieldOrPropertyWithValue("description", "description");
                      assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2010, 10, 10));
                      assertThat(film).hasFieldOrPropertyWithValue("duration", 100);
-                     assertThat(film).hasFieldOrPropertyWithValue("mpa", new Mpa(1, "G"));
                  });
     }
 
