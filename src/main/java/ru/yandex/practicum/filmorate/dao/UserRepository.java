@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
-    Optional<User> save(User user);
+    User save(User user);
 
     void delete(int userId);
 
-    Optional<User> update(User user);
+    User update(User user);
 
     Optional<User> getById(int userId);
 
@@ -23,6 +23,4 @@ public interface UserRepository {
     List<User> getFriends(int userId);
 
     List<User> getMutualFriends(int userId, int otherId);
-
-    boolean checkIsFriends(int userId, int otherId);
 }

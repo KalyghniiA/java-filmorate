@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.util.validateAnotation.dateRelease.ValidDat
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 
@@ -23,7 +24,7 @@ public class Film {
     @NotNull(message = "Передано пустое значение длительности фильма")
     @Positive(message = "Передано отрицательное значение длительности фильма")
     private final Integer duration;
-    private Set<Genre> genres = new HashSet<>();
+    private Set<Genre> genres = new LinkedHashSet<>();
     private Mpa mpa;
     private Set<Integer> likes = new HashSet<>();
 }

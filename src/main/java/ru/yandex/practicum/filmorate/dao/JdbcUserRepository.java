@@ -7,7 +7,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dao.mappers.UserRowMapper;
+import ru.yandex.practicum.filmorate.dao.extractors.FriendsExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.UserExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.UsersExtractor;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
@@ -18,7 +20,7 @@ public class JdbcUserRepository implements UserRepository {
     private final NamedParameterJdbcOperations jdbc;
 
     @Override
-    public Optional<User> save(User user) {
+    public User save(User user) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         Map<String, Object> param = Map.of(
                 "login", user.getLogin(),
@@ -34,7 +36,7 @@ public class JdbcUserRepository implements UserRepository {
         jdbc.update(sql, new MapSqlParameterSource().addValues(param), keyHolder, new String[]{"user_id"});
 
         user.setId(keyHolder.getKeyAs(Integer.class));
-        return Optional.ofNullable(user);
+        return user;
     }
 
     @Override
@@ -45,7 +47,7 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> update(User user) {
+    public User update(User user) {
         Map<String, Object> param = Map.of(
                 "user_id", user.getId(),
                 "login", user.getLogin(),
@@ -64,7 +66,7 @@ public class JdbcUserRepository implements UserRepository {
                 """;
 
         jdbc.update(sql, param);
-        return Optional.ofNullable(user);
+        return user;
     }
 
     @Override
@@ -77,10 +79,9 @@ public class JdbcUserRepository implements UserRepository {
                 """;
         String sqlFriends = "SELECT FRIEND_ID FROM FRIENDS WHERE USER_ID = :user_id;";
 
-        User user = jdbc.queryForObject(sql, param, new UserRowMapper());
-        SqlRowSet rowSetFriends = jdbc.queryForRowSet(sqlFriends, param);
-        while (rowSetFriends.next()) {
-            user.getFriends().add(rowSetFriends.getInt("FRIEND_ID"));
+        User user = jdbc.query(sql, param, new UserExtractor());
+        if (user != null) {
+            user.getFriends().addAll(jdbc.query(sqlFriends, param, new FriendsExtractor()));
         }
 
         return Optional.ofNullable(user);
@@ -91,26 +92,10 @@ public class JdbcUserRepository implements UserRepository {
         String sql = "SELECT USER_ID, LOGIN, NAME, EMAIL, BIRTHDAY FROM USERS;";
         String sqlFriends = "SELECT FRIEND_ID FROM FRIENDS WHERE USER_ID = :user_id;";
 
-        List<User> users = new ArrayList<>();
-        SqlRowSet rowSet = jdbc.queryForRowSet(sql, Map.of());
-
-        while (rowSet.next()) {
-            //уточнение, есть ли возможность использовать сразу строку из таблицы и передавать ей маппер
-            User user = new User(
-                    rowSet.getString("LOGIN"),
-                    rowSet.getString("EMAIL"),
-                    rowSet.getDate("BIRTHDAY").toLocalDate()
-            );
-            user.setName(rowSet.getString("NAME"));
-            user.setId(rowSet.getInt("USER_ID"));
-
+        List<User> users = jdbc.query(sql, new UsersExtractor());
+        for (User user: users) {
             Map<String, Object> param = Map.of("user_id", user.getId());
-            SqlRowSet rowSetFriends = jdbc.queryForRowSet(sqlFriends, param);
-
-            while (rowSetFriends.next()) {
-                user.getFriends().add(rowSetFriends.getInt("FRIEND_ID"));
-            }
-            users.add(user);
+            user.getFriends().addAll(jdbc.query(sqlFriends, param, new FriendsExtractor()));
         }
 
         return users;
@@ -118,7 +103,7 @@ public class JdbcUserRepository implements UserRepository {
 
     @Override
     public User addFriend(int userId, int friendId) {
-        String sql = "INSERT INTO FRIENDS(USER_ID, FRIEND_ID) VALUES ( :user_id, :friend_id );";
+        String sql = "MERGE INTO FRIENDS(USER_ID, FRIEND_ID) VALUES ( :user_id, :friend_id );";
         Map<String, Object> param = Map.of(
                 "user_id", userId,
                 "friend_id", friendId
@@ -170,19 +155,5 @@ public class JdbcUserRepository implements UserRepository {
         }
 
         return users;
-    }
-
-    public boolean checkIsFriends(int userId, int friendId) {
-        String sql = """
-                SELECT EXISTS(
-                    SELECT USER_ID, FRIEND_ID FROM FRIENDS WHERE USER_ID = :user_id AND FRIEND_ID = :friend_id
-                );
-                """;
-        Map<String, Object> param = Map.of(
-                "user_id", userId,
-                "friend_id", friendId
-        );
-
-        return jdbc.queryForObject(sql, param, Boolean.class);
     }
 }

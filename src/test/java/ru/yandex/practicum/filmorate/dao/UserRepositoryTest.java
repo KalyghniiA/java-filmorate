@@ -21,18 +21,20 @@ public class UserRepositoryTest {
 
     @Test
     public void save() {
-        User user = new User("name", "email@email.ru", LocalDate.now());
+        LocalDate date = LocalDate.now();
+        User user = new User("name", "email@email.ru", date);
         user.setName("name");
 
         userRepository.save(user);
 
         assertThat(userRepository.getById(5))
                 .isPresent()
-                .hasValueSatisfying(userOptional ->
-                    assertThat(userOptional).hasFieldOrPropertyWithValue("name", "name")
-                ).hasValueSatisfying(userOptional ->
-                    assertThat(userOptional).hasFieldOrPropertyWithValue("email", "email@email.ru")
-                );
+                .hasValueSatisfying(userOptional -> {
+                    assertThat(userOptional).hasFieldOrPropertyWithValue("name", "name");
+                    assertThat(userOptional).hasFieldOrPropertyWithValue("email", "email@email.ru");
+                    assertThat(userOptional).hasFieldOrPropertyWithValue("login", "name");
+                    assertThat(userOptional).hasFieldOrPropertyWithValue("birthday", "date");
+                });
     }
 
     @Test
@@ -41,20 +43,28 @@ public class UserRepositoryTest {
 
         assertThat(userOptional)
                 .isPresent()
-                .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("name", "user1"))
-                .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("email", "@email1.ru"));
+                .hasValueSatisfying(user -> {
+                    assertThat(user).hasFieldOrPropertyWithValue("name", "user1");
+                    assertThat(user).hasFieldOrPropertyWithValue("email", "@email1.ru");
+                    assertThat(user).hasFieldOrPropertyWithValue("login", "user1");
+                    assertThat(user).hasFieldOrPropertyWithValue("birthday", LocalDate.of(2020, 10, 10));
+                });
     }
 
     @Test
     public void update() {
         User oldUserOptional = userRepository.getById(1).orElseThrow();
         oldUserOptional.setName("newName");
-
-        Optional<User> newUserOptional = userRepository.update(oldUserOptional);
+        userRepository.update(oldUserOptional);
+        Optional<User> newUserOptional = userRepository.getById(1);
         assertThat(newUserOptional)
                 .isPresent()
-                .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("name", "newName"))
-                .hasValueSatisfying(user -> assertThat(user).hasFieldOrPropertyWithValue("email", "@email1.ru"));
+                .hasValueSatisfying(user -> {
+                    assertThat(user).hasFieldOrPropertyWithValue("name", "newName");
+                    assertThat(user).hasFieldOrPropertyWithValue("email", "@email1.ru");
+                    assertThat(user).hasFieldOrPropertyWithValue("login", "user1");
+                    assertThat(user).hasFieldOrPropertyWithValue("birthday", LocalDate.of(2020, 10, 11));
+                });
     }
 
     @Test

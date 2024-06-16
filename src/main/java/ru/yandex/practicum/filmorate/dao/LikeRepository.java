@@ -4,11 +4,9 @@ package ru.yandex.practicum.filmorate.dao;
 import java.util.List;
 
 public interface LikeRepository {
-    void addLike(int idFilm, int idUser);
+    void addLike(int filmId, int userId);
 
-    void removeLike(int idFilm, int idUser);
+    void removeLike(int filmId, int userId);
 
     List<Integer> getLikeByFilm(int filmId);
-
-
 }

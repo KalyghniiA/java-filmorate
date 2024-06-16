@@ -16,10 +16,24 @@ public class JdbcGenreRepository implements GenreRepository {
 
 
     @Override
-    public Optional<Genre> getGenreById(int genreId) {
+    public Genre getGenreById(int genreId) {
         String sql = "SELECT GENRE_ID, NAME FROM GENRES WHERE GENRE_ID = :genre_id";
         Map<String, Object> param = Map.of("genre_id", genreId);
-        return Optional.ofNullable(jdbc.queryForObject(sql, param, new GenreRowMapper()));
+        return jdbc.queryForObject(sql, param, new GenreRowMapper());
+    }
+
+    @Override
+    public List<Genre> getGenresById(List<Integer> genresId) {
+        String sql = "SELECT GENRE_ID, NAME FROM GENRES WHERE GENRE_ID IN ( :genres_id )";
+        Map<String, Object> param = Map.of("genres_id", genresId);
+        List<Genre> genres = new ArrayList<>();
+        SqlRowSet rs = jdbc.queryForRowSet(sql, param);
+
+        while (rs.next()) {
+            genres.add(new Genre(rs.getInt("GENRE_ID"), rs.getString("NAME")));
+        }
+
+        return genres;
     }
 
     @Override

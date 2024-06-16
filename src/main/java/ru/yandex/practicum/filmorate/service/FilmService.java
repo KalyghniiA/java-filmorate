@@ -24,7 +24,7 @@ public interface FilmService {
 
     void removeLike(int filmId, int userId);
 
-    Collection<Film> getPopular(int count);
+    List<Film> getPopular(int count);
 
     List<Genre> getGenres();
 
@@ -33,8 +33,4 @@ public interface FilmService {
     Genre getGenreById(int genreId);
 
     Mpa getRatingById(int ratingId);
-
-    Collection<Film> getOfRating(int ratingId);
-
-    Collection<Film> getOfGenre(int genreId);
 }

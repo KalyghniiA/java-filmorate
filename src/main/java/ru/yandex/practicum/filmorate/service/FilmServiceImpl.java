@@ -14,13 +14,11 @@ import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 
-public class ImplFilmService implements FilmService {
+public class FilmServiceImpl implements FilmService {
     private final FilmRepository filmRepository;
     private final GenreRepository genreRepository;
     private final MpaRepository mpaRepository;
@@ -28,7 +26,7 @@ public class ImplFilmService implements FilmService {
 
 
     @Autowired
-    public ImplFilmService(FilmRepository filmRepository,
+    public FilmServiceImpl(FilmRepository filmRepository,
                            GenreRepository genreRepository,
                            MpaRepository mpaRepository,
                            LikeRepository likeRepository) {
@@ -42,32 +40,31 @@ public class ImplFilmService implements FilmService {
     public Film post(Film film) {
         try {
             if (film.getMpa() != null) {
-                mpaRepository.getRatingById(film.getMpa().getId());
+                film.setMpa(mpaRepository.getRatingById(film.getMpa().getId()));
             }
         } catch (EmptyResultDataAccessException e) {
             throw new ValidationException(String.format("Рейтинга с id %s нет в базе", film.getMpa().getId()));
         }
 
-        try {
-            if (!film.getGenres().isEmpty()) {
-                for (Genre genre: film.getGenres()) {
-                    genreRepository.getGenreById(genre.getId());
-                }
+        if (!film.getGenres().isEmpty()) {
+            Set<Genre> genres = Set.copyOf(genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList()));
+            if (genres.size() != film.getGenres().size()) {
+                throw new ValidationException("Одного из жанров нет в базе");
             }
-        } catch (EmptyResultDataAccessException e) {
-            throw new ValidationException("Одного из жанров нет в базе");
+
+            film.setGenres(genres);
         }
+
 
         return filmRepository.save(film);
     }
 
     @Override
     public Film get(int id) {
-        Optional<Film> film = filmRepository.getById(id);
-        if (film.isEmpty()) {
-            throw new NotFoundException(String.format("Фильма с id %s нет в базе", id));
-        }
-        return film.get();
+        return filmRepository.getById(id)
+                .orElseThrow(
+                        () -> new NotFoundException(String.format("Фильма с id %s нет в базе", id))
+                );
     }
 
     @Override
@@ -82,12 +79,11 @@ public class ImplFilmService implements FilmService {
 
     @Override
     public Film put(Film film) {
-        if (film.getId() == null) {
-            return filmRepository.save(film);
-        }
-        if (filmRepository.getById(film.getId()).isEmpty()) {
-            throw new NotFoundException(String.format("Фильма с id %s нет в базе", film.getId()));
-        }
+        filmRepository.getById(film.getId())
+                .orElseThrow(
+                        () -> new NotFoundException(String.format("Фильма с id %s нет в базе", film.getId()))
+                );
+
         try {
             if (film.getMpa() != null) {
                 mpaRepository.getRatingById(film.getMpa().getId());
@@ -96,37 +92,29 @@ public class ImplFilmService implements FilmService {
             throw new ValidationException(String.format("Рейтинга с id %s нет в базе", film.getMpa().getId()));
         }
 
-        try {
-            if (!film.getGenres().isEmpty()) {
-                for (Genre genre: film.getGenres()) {
-                    genreRepository.getGenreById(genre.getId());
-                }
+        if (!film.getGenres().isEmpty()) {
+            Set<Genre> genres = Set.copyOf(genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList()));
+            if (genres.size() != film.getGenres().size()) {
+                throw new ValidationException("Одного из жанров нет в базе");
             }
-        } catch (EmptyResultDataAccessException e) {
-            throw new ValidationException("Одного из жанров нет в базе");
+            film.setGenres(genres);
         }
-        return filmRepository.update(film);
+        filmRepository.update(film);
+        return film;
     }
 
     @Override
     public void addLike(int filmId, int userId) {
-        if (likeRepository.getLikeByFilm(filmId).contains(userId)) {
-            return;
-        }
-
         likeRepository.addLike(filmId, userId);
     }
 
     @Override
     public void removeLike(int filmId, int userId) {
-        if (!likeRepository.getLikeByFilm(filmId).contains(userId)) {
-            return;
-        }
         likeRepository.removeLike(filmId, userId);
     }
 
     @Override
-    public Collection<Film> getPopular(int count) {
+    public List<Film> getPopular(int count) {
         return filmRepository.getTopPopular(count);
     }
 
@@ -142,46 +130,19 @@ public class ImplFilmService implements FilmService {
 
     @Override
     public Genre getGenreById(int genreId) {
-        Optional<Genre> genre = genreRepository.getGenreById(genreId);
-        if (genre.isEmpty()) {
+        Genre genre = genreRepository.getGenreById(genreId);
+        if (genre == null) {
             throw new NotFoundException(String.format("Жанра с id %s нет в базе", genreId));
         }
-        return genre.get();
+        return genre;
     }
 
     @Override
     public Mpa getRatingById(int ratingId) {
-        Optional<Mpa> mpa = mpaRepository.getRatingById(ratingId);
-        if (mpa.isEmpty()) {
+        Mpa mpa = mpaRepository.getRatingById(ratingId);
+        if (mpa == null) {
             throw new NotFoundException(String.format("Рейтинга с id %s нет в базе", ratingId));
         }
-        return mpa.get();
+        return mpa;
     }
-
-    @Override
-    public Collection<Film> getOfRating(int ratingId) {
-        Optional<Mpa> mpa = mpaRepository.getRatingById(ratingId);
-        if (mpa.isEmpty()) {
-            throw new NotFoundException(String.format("Рейтинга с id %s нет в базе", ratingId));
-        }
-        try {
-            return filmRepository.getFilmsByRating(ratingId);
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Фильмов с данным рейтингом нет");
-        }
-    }
-
-    @Override
-    public Collection<Film> getOfGenre(int genreId) {
-        Optional<Genre> genre = genreRepository.getGenreById(genreId);
-        if (genre.isEmpty()) {
-            throw new NotFoundException(String.format("Жанра с id %s нет в базе", genreId));
-        }
-        try {
-            return filmRepository.getFilmsByGenre(genreId);
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Фильмов с данным жанром нет в базе");
-        }
-    }
-
 }

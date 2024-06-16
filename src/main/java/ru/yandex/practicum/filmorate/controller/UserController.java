@@ -8,7 +8,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import java.util.Collection;
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -38,9 +38,9 @@ public class UserController {
     }
 
     @GetMapping(value = "/users")
-    public Collection<User> getUsers() {
+    public List<User> getUsers() {
         log.info("Получен GET запрос на получение всех пользователей");
-        Collection<User> users = userService.getAll();
+        List<User> users = userService.getAll();
         log.info("Отправлены все пользователи");
         return users;
     }
@@ -49,7 +49,7 @@ public class UserController {
     public User putUser(@RequestBody @Valid User user) {
         log.info("Получен PUT запрос на изменение пользователя");
         User newUser = userService.put(user);
-        log.info(String.format("Пользователь с id %s изменен", newUser.getId()));
+        log.info(String.format("Пользователь с id %s изменен", user.getId()));
         return newUser;
     }
 
@@ -78,17 +78,17 @@ public class UserController {
     }
 
     @GetMapping(value = "/users/{id}/friends")
-    public Collection<User> getFriendsForUser(@PathVariable Integer id) {
+    public List<User> getFriendsForUser(@PathVariable Integer id) {
         log.info("Получен GET запрос на получение списка друзей пользователя");
-        Collection<User> friends = userService.getFriends(id);
+        List<User> friends = userService.getFriends(id);
         log.info(String.format("Друзья пользователя с id %s отправлены",id));
         return friends;
     }
 
     @GetMapping(value = "/users/{id}/friends/common/{otherId}")
-    public Collection<User> getMutualFriendsForUser(@PathVariable Integer id, @PathVariable Integer otherId) {
+    public List<User> getMutualFriendsForUser(@PathVariable Integer id, @PathVariable Integer otherId) {
         log.info("Получен GET запрос на получение общего списка друзей");
-        Collection<User> friends = userService.getMutualFriends(id, otherId);
+        List<User> friends = userService.getMutualFriends(id, otherId);
         log.info(String.format("Список общих друзей пользователей с id %s и %s отправлен", id, otherId));
         return friends;
     }

@@ -7,13 +7,14 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 
+import ru.yandex.practicum.filmorate.dao.extractors.FilmExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.FilmsExtractor;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+
 
 
 import java.util.*;
@@ -40,32 +41,12 @@ public class JdbcFilmRepository implements FilmRepository {
                 LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                 JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                 WHERE FILMS.FILM_ID = :film_id
-                order by GENRE_ID
+                order by GENRE_ID;
                 """;
         Map<String, Object> param = Map.of("film_id", id);
-        SqlRowSet rs = jdbc.queryForRowSet(sql, param);
-        Film film = null;
-        if (rs.next()) {
-            film = new Film(
-                    rs.getString("FILM_NAME"),
-                    rs.getString("DESCRIPTION"),
-                    rs.getDate("RELEASE_DATE").toLocalDate(),
-                    rs.getInt("DURATION")
-            );
-            film.setId(rs.getInt("ID"));
-            film.setMpa(new Mpa(rs.getInt("RATING_ID"), rs.getString("RATING_NAME")));
-            int idGenre = rs.getInt("GENRE_ID");
-            if (idGenre != 0) {
-                film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
-                while (rs.next()) {
-                    film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
-                }
-            }
-        }
-
+        Film film = jdbc.query(sql, param, new FilmExtractor());
 
         return Optional.ofNullable(film);
-
     }
 
     @Override
@@ -87,7 +68,6 @@ public class JdbcFilmRepository implements FilmRepository {
         jdbc.update(sql, new MapSqlParameterSource().addValues(paramFilm), keyHolder, new String[]{"film_id"});
         film.setId(keyHolder.getKeyAs(Integer.class));
         saveGenresForFilm(film.getId(), film.getGenres());
-
         return film;
     }
 
@@ -114,7 +94,6 @@ public class JdbcFilmRepository implements FilmRepository {
 
         jdbc.update(sql, param);
         saveGenresForFilm(film.getId(), film.getGenres());
-
         return film;
     }
 
@@ -163,7 +142,7 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                          JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                GROUP BY FILM_GENRES.GENRE_ID, ID
+                GROUP BY ID, FILM_GENRES.GENRE_ID
                 ORDER BY LIKE_COUNT DESC
                 LIMIT :count;
                 """;
@@ -172,79 +151,8 @@ public class JdbcFilmRepository implements FilmRepository {
         return getFilms(sql, param);
     }
 
-    @Override
-    public List<Film> getFilmsByGenre(int genreId) {
-        String sql = """
-                SELECT FILMS.FILM_ID AS ID,
-                       FILMS.NAME AS FILM_NAME,
-                       DESCRIPTION,
-                       RELEASE_DATE,
-                       DURATION,
-                       RATING AS RATING_ID,
-                       RATINGS.NAME AS RATING_NAME,
-                       GENRES.GENRE_ID AS GENRE_ID,
-                       GENRES.NAME AS GENRE_NAME
-                FROM FILMS
-                JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
-                JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
-                WHERE FILMS.FILM_ID IN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = :genre_id);
-                """;
-        Map<String, Object> param = Map.of("genre_id", genreId);
-
-        return getFilms(sql, param);
-    }
-
-    @Override
-    public List<Film> getFilmsByRating(int ratingId) {
-        String sql = """
-                SELECT FILMS.FILM_ID AS ID,
-                       FILMS.NAME AS FILM_NAME,
-                       DESCRIPTION,
-                       RELEASE_DATE,
-                       DURATION,
-                       RATING AS RATING_ID,
-                       RATINGS.NAME AS RATING_NAME,
-                       GENRES.GENRE_ID AS GENRE_ID,
-                       GENRES.NAME AS GENRE_NAME
-                FROM FILMS
-                JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
-                JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
-                WHERE RATING = :rating_id;
-                """;
-        Map<String, Object> param = Map.of("rating_id", ratingId);
-
-        return getFilms(sql, param);
-    }
-
     private List<Film> getFilms(String sql, Map<String, Object> param) {
-       Map<Integer, Film> films = new LinkedHashMap<>();
-
-       SqlRowSet rs = jdbc.queryForRowSet(sql, param);
-       while (rs.next()) {
-           Integer filmId = rs.getInt("FILM_ID");
-           if (films.containsKey(filmId)) {
-               films.get(filmId)
-                       .getGenres()
-                       .add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
-               continue;
-           }
-
-
-           Film film = new Film(
-                   rs.getString("FILM_NAME"),
-                   rs.getString("DESCRIPTION"),
-                   rs.getDate("RELEASE_DATE").toLocalDate(),
-                   rs.getInt("DURATION")
-           );
-           film.setId(filmId);
-           film.setMpa(new Mpa(rs.getInt("RATING_ID"), rs.getString("RATING_NAME")));
-           film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
-           films.put(filmId, film);
-
-       }
-
+       Map<Integer, Film> films = jdbc.query(sql, param, new FilmsExtractor());
        return films.values().stream().toList();
     }
 

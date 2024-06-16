@@ -1,7 +1,9 @@
-create table if not exists FRIENDS
+create table IF NOT EXISTS FRIENDS
 (
     USER_ID   INTEGER not null,
-    FRIEND_ID INTEGER not null
+    FRIEND_ID INTEGER not null,
+    constraint "FRIENDS_pk"
+        primary key (USER_ID, FRIEND_ID)
 );
 
 create table if not exists GENRES
@@ -17,11 +19,14 @@ create table if not exists FILM_GENRES
     GENRE_ID INTEGER
 );
 
-create table if not exists LIKES
+create table IF NOT EXISTS LIKES
 (
     FILM_ID INTEGER not null,
-    USER_ID INTEGER not null
+    USER_ID INTEGER not null,
+    constraint "LIKES_pk"
+        primary key (USER_ID, FILM_ID)
 );
+
 
 create table if not exists RATINGS
 (

@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -23,22 +22,22 @@ public class FilmRepositoryTests {
 
     @Test
     public void saveFilm() {
+        LocalDate date = LocalDate.now();
         Film newFilm = new Film(
                 "New Film",
                 "description",
-                LocalDate.now(),
+                date,
                 100
         );
 
         newFilm.setMpa(new Mpa(1, null));
 
-        Optional<Film> filmOptional = Optional.ofNullable(filmRepository.save(newFilm));
+        Film film = filmRepository.save(newFilm);
+        assertThat(film).hasFieldOrPropertyWithValue("name", "New Film");
+        assertThat(film).hasFieldOrPropertyWithValue("description", "description" );
+        assertThat(film).hasFieldOrPropertyWithValue("releaseDate", date);
+        assertThat(film).hasFieldOrPropertyWithValue("duration", 100);
 
-        assertThat(filmOptional)
-                .isPresent()
-                .hasValueSatisfying(film ->
-                   assertThat(film).hasFieldOrPropertyWithValue("name", "New Film")
-                );
     }
 
     @Test
@@ -46,7 +45,14 @@ public class FilmRepositoryTests {
         Optional<Film> filmOptional = filmRepository.getById(1);
         assertThat(filmOptional)
                 .isPresent()
-                .hasValueSatisfying(film -> assertThat(film).hasFieldOrPropertyWithValue("name", "film1"));
+                .hasValueSatisfying(film -> {
+                    assertThat(film).hasFieldOrPropertyWithValue("name", "film1");
+                    assertThat(film).hasFieldOrPropertyWithValue("id", 1);
+                    assertThat(film).hasFieldOrPropertyWithValue("description", "description");
+                    assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2010, 10, 10));
+                    assertThat(film).hasFieldOrPropertyWithValue("duration", 100);
+                    assertThat(film).hasFieldOrPropertyWithValue("mpa", new Mpa(1, "G"));
+                });
     }
 
     @Test
@@ -60,7 +66,14 @@ public class FilmRepositoryTests {
 
          assertThat(optionalFilm)
                  .isPresent()
-                 .hasValueSatisfying(f -> assertThat(f).hasFieldOrPropertyWithValue("name", "newFilm"));
+                 .hasValueSatisfying(f -> {
+                     assertThat(f).hasFieldOrPropertyWithValue("name", "newFilm");
+                     assertThat(film).hasFieldOrPropertyWithValue("id", 1);
+                     assertThat(film).hasFieldOrPropertyWithValue("description", "description");
+                     assertThat(film).hasFieldOrPropertyWithValue("releaseDate", LocalDate.of(2010, 10, 10));
+                     assertThat(film).hasFieldOrPropertyWithValue("duration", 100);
+                     assertThat(film).hasFieldOrPropertyWithValue("mpa", new Mpa(1, "G"));
+                 });
     }
 
     @Test
@@ -71,39 +84,5 @@ public class FilmRepositoryTests {
 
         assertThat(filmOptional).isEmpty();
     }
-/*
-    @Test
-    public void getAll() {
-        List<Film> films = filmRepository.getAll();
 
-        assertThat(films.size())
-                .isEqualTo(6);
-    }
-
-    @Test
-    public void getTopPopular() {
-        List<Film> films = filmRepository.getTopPopular(1000);
-
-
-        assertThat(films.size())
-                .isEqualTo(6);
-        assertThat(films.get(0))
-                .hasFieldOrPropertyWithValue("name", "film3");
-        assertThat(films.get(1))
-                .hasFieldOrPropertyWithValue("name", "film4");
-    }*/
-
-    @Test
-    public void getFilmsByGenre() {
-        List<Film> films = filmRepository.getFilmsByGenre(2);
-
-        assertThat(films.size()).isEqualTo(3);
-    }
-
-    @Test
-    public void getFilmsByRating() {
-        List<Film> films = filmRepository.getFilmsByRating(1);
-
-        assertThat(films.size()).isEqualTo(2);
-    }
 }

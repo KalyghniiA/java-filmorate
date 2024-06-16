@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -23,15 +22,17 @@ public class JdbcMpaRepository implements MpaRepository {
         List<Mpa> ratings = new ArrayList<>();
         SqlRowSet rs = jdbc.queryForRowSet(sql, Map.of());
         while (rs.next()) {
+            Mpa mpa = new Mpa(rs.getInt("ID"), rs.getString("NAME"));
+            System.out.println(mpa);
             ratings.add(new Mpa(rs.getInt("ID"), rs.getString("NAME")));
         }
         return ratings;
     }
 
     @Override
-    public Optional<Mpa> getRatingById(int ratingId) {
+    public Mpa getRatingById(int ratingId) {
         String sql = "SELECT RATING_ID, NAME FROM RATINGS WHERE RATING_ID = :rating_id";
         Map<String, Object> param = Map.of("rating_id", ratingId);
-        return Optional.ofNullable(jdbc.queryForObject(sql, param, new MpaRowMapper()));
+        return jdbc.queryForObject(sql, param, new MpaRowMapper());
     }
 }
