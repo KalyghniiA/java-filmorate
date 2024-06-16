@@ -37,7 +37,6 @@ public class FilmRepositoryTests {
         assertThat(film).hasFieldOrPropertyWithValue("description", "description" );
         assertThat(film).hasFieldOrPropertyWithValue("releaseDate", date);
         assertThat(film).hasFieldOrPropertyWithValue("duration", 100);
-
     }
 
     @Test
@@ -84,5 +83,4 @@ public class FilmRepositoryTests {
 
         assertThat(filmOptional).isEmpty();
     }
-
 }
