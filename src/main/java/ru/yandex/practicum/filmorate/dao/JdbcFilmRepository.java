@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import ru.yandex.practicum.filmorate.dao.extractors.FilmExtractor;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmsExtractor;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -37,11 +35,10 @@ public class JdbcFilmRepository implements FilmRepository {
                        GENRES.GENRE_ID AS GENRE_ID,
                        GENRES.NAME AS GENRE_NAME
                 FROM FILMS
-                JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                LEFT JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
                 LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                 JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
-                WHERE FILMS.FILM_ID = :film_id
-                order by GENRE_ID;
+                WHERE FILMS.FILM_ID = :film_id;
                 """;
         Map<String, Object> param = Map.of("film_id", id);
         Film film = jdbc.query(sql, param, new FilmExtractor());
@@ -72,7 +69,7 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public Film update(Film film) {
+    public void update(Film film) {
         Map<String, Object> param = Map.of(
                 "film_id", film.getId(),
                 "name", film.getName(),
@@ -94,7 +91,6 @@ public class JdbcFilmRepository implements FilmRepository {
 
         jdbc.update(sql, param);
         saveGenresForFilm(film.getId(), film.getGenres());
-        return film;
     }
 
     @Override
@@ -157,16 +153,11 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     private void saveGenresForFilm(int filmId, Set<Genre> genres) {
-        Map<String, Object>[] batchOfInputs = new HashMap[genres.size()];
         String sqlDelete = "DELETE FROM FILM_GENRES WHERE FILM_ID = :film_id AND GENRE_ID = :genre_id;";
         String sqlInsert = "INSERT INTO FILM_GENRES(FILM_ID, GENRE_ID) VALUES ( :film_id, :genre_id );";
-        String sqlInsertNull = "INSERT INTO FILM_GENRES(FILM_ID, GENRE_ID) VALUES ( :film_id, NULL );";
-        int count = 0;
 
-        if (genres.isEmpty()) {
-            jdbc.update(sqlInsertNull, Map.of("film_id", filmId));
-            return;
-        }
+        Map<String, Object>[] batchOfInputs = new HashMap[genres.size()];
+        int count = 0;
 
         for (Genre genre: genres) {
             Map<String, Object> map = new HashMap<>();
@@ -175,11 +166,8 @@ public class JdbcFilmRepository implements FilmRepository {
             batchOfInputs[count++] = map;
         }
 
+
         jdbc.batchUpdate(sqlDelete, batchOfInputs);
-        try {
-            jdbc.batchUpdate(sqlInsert, batchOfInputs);
-        } catch (EmptyResultDataAccessException e) {
-            throw new ValidationException("Один из жанров отсутствует в базе");
-        }
+        jdbc.batchUpdate(sqlInsert, batchOfInputs);
     }
 }

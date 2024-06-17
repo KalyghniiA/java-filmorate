@@ -8,6 +8,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.GenreService;
+import ru.yandex.practicum.filmorate.service.MpaService;
 
 
 import javax.validation.Valid;
@@ -17,10 +19,14 @@ import java.util.*;
 @Slf4j
 public class FilmController {
     private final FilmService filmService;
+    private final GenreService genreService;
+    private final MpaService mpaService;
 
     @Autowired
-    public FilmController(FilmService filmService) {
+    public FilmController(FilmService filmService, GenreService genreService, MpaService mpaService) {
         this.filmService = filmService;
+        this.genreService = genreService;
+        this.mpaService = mpaService;
     }
 
     @GetMapping(value = "/films")
@@ -82,7 +88,7 @@ public class FilmController {
     @GetMapping("/genres")
     public Collection<Genre> getGenres() {
         log.info("Получен GET запрос на получение списка жанров");
-        Collection<Genre> genres = filmService.getGenres();
+        Collection<Genre> genres = genreService.getGenres();
         log.info("Отправлены жанры");
         return genres;
     }
@@ -90,7 +96,7 @@ public class FilmController {
     @GetMapping("/genres/{id}")
     public Genre getGenreById(@PathVariable Integer id) {
         log.info(String.format("Получен GET запрос на получение имени жанра с id %s", id));
-        Genre parameter = filmService.getGenreById(id);
+        Genre parameter = genreService.getGenreById(id);
         log.info(String.format("Отправлено имя жанра с id %s", id));
         return parameter;
     }
@@ -98,7 +104,7 @@ public class FilmController {
     @GetMapping("/mpa")
     public Collection<Mpa> getRating() {
         log.info("Получен GET запрос на получение списка рейтингов");
-        Collection<Mpa> ratings = filmService.getRatings();
+        Collection<Mpa> ratings = mpaService.getRatings();
         log.info("Отправлены рейтинги");
         return ratings;
     }
@@ -106,7 +112,7 @@ public class FilmController {
     @GetMapping("/mpa/{id}")
     public Mpa getRatingById(@PathVariable Integer id) {
         log.info(String.format("Получен GET запрос на получение рейтинга c id %s", id));
-        Mpa parameter = filmService.getRatingById(id);
+        Mpa parameter = mpaService.getRatingById(id);
         log.info(String.format("Отправлено название рейтинга c id  %s", id));
         return parameter;
     }

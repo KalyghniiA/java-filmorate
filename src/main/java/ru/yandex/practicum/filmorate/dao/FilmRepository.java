@@ -10,7 +10,7 @@ public interface FilmRepository {
 
     Film save(Film film);
 
-    Film update(Film film);
+    void update(Film film);
 
     void delete(int id);
 

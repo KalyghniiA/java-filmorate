@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.GenreRepository;
 import ru.yandex.practicum.filmorate.dao.LikeRepository;
@@ -12,12 +11,10 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.*;
 
 @Service
-
 public class FilmServiceImpl implements FilmService {
     private final FilmRepository filmRepository;
     private final GenreRepository genreRepository;
@@ -38,12 +35,10 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film post(Film film) {
-        try {
-            if (film.getMpa() != null) {
-                film.setMpa(mpaRepository.getRatingById(film.getMpa().getId()));
-            }
-        } catch (EmptyResultDataAccessException e) {
-            throw new ValidationException(String.format("Рейтинга с id %s нет в базе", film.getMpa().getId()));
+        if (film.getMpa() != null) {
+            film.setMpa(
+                    mpaRepository.getRatingById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
+            );
         }
 
         if (!film.getGenres().isEmpty()) {
@@ -84,12 +79,10 @@ public class FilmServiceImpl implements FilmService {
                         () -> new NotFoundException(String.format("Фильма с id %s нет в базе", film.getId()))
                 );
 
-        try {
-            if (film.getMpa() != null) {
-                mpaRepository.getRatingById(film.getMpa().getId());
-            }
-        } catch (EmptyResultDataAccessException e) {
-            throw new ValidationException(String.format("Рейтинга с id %s нет в базе", film.getMpa().getId()));
+        if (film.getMpa() != null) {
+            film.setMpa(
+                    mpaRepository.getRatingById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
+            );
         }
 
         if (!film.getGenres().isEmpty()) {
@@ -116,33 +109,5 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getPopular(int count) {
         return filmRepository.getTopPopular(count);
-    }
-
-    @Override
-    public List<Genre> getGenres() {
-        return genreRepository.getGenres();
-    }
-
-    @Override
-    public List<Mpa> getRatings() {
-        return mpaRepository.getRatings();
-    }
-
-    @Override
-    public Genre getGenreById(int genreId) {
-        Genre genre = genreRepository.getGenreById(genreId);
-        if (genre == null) {
-            throw new NotFoundException(String.format("Жанра с id %s нет в базе", genreId));
-        }
-        return genre;
-    }
-
-    @Override
-    public Mpa getRatingById(int ratingId) {
-        Mpa mpa = mpaRepository.getRatingById(ratingId);
-        if (mpa == null) {
-            throw new NotFoundException(String.format("Рейтинга с id %s нет в базе", ratingId));
-        }
-        return mpa;
     }
 }

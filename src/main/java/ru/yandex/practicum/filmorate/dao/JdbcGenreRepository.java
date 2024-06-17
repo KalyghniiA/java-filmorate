@@ -2,8 +2,8 @@ package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.extractors.GenreExtractor;
 import ru.yandex.practicum.filmorate.dao.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -16,36 +16,23 @@ public class JdbcGenreRepository implements GenreRepository {
 
 
     @Override
-    public Genre getGenreById(int genreId) {
+    public Optional<Genre> getGenreById(int genreId) {
         String sql = "SELECT GENRE_ID, NAME FROM GENRES WHERE GENRE_ID = :genre_id";
         Map<String, Object> param = Map.of("genre_id", genreId);
-        return jdbc.queryForObject(sql, param, new GenreRowMapper());
+        return Optional.ofNullable(jdbc.query(sql, param, new GenreExtractor()));
     }
 
     @Override
     public List<Genre> getGenresById(List<Integer> genresId) {
         String sql = "SELECT GENRE_ID, NAME FROM GENRES WHERE GENRE_ID IN ( :genres_id )";
         Map<String, Object> param = Map.of("genres_id", genresId);
-        List<Genre> genres = new ArrayList<>();
-        SqlRowSet rs = jdbc.queryForRowSet(sql, param);
-
-        while (rs.next()) {
-            genres.add(new Genre(rs.getInt("GENRE_ID"), rs.getString("NAME")));
-        }
-
-        return genres;
+        return jdbc.query(sql, param, new GenreRowMapper());
     }
 
     @Override
     public List<Genre> getGenres() {
         String sql = "SELECT GENRE_ID AS ID, NAME FROM GENRES;";
-        List<Genre> genres = new ArrayList<>();
-        SqlRowSet rs = jdbc.queryForRowSet(sql, Map.of());
-        while (rs.next()) {
-            genres.add(new Genre(rs.getInt("ID"), rs.getString("NAME")));
-        }
-
-        return genres;
+        return jdbc.query(sql, new GenreRowMapper());
     }
 
 }

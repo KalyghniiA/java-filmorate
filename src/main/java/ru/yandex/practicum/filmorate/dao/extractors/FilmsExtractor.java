@@ -17,7 +17,7 @@ public class FilmsExtractor implements ResultSetExtractor<Map<Integer, Film>> {
         Map<Integer, Film> films = new LinkedHashMap<>();
         while (rs.next()) {
             Integer filmId = rs.getInt("FILM_ID");
-            if (films.containsKey(filmId)) {
+            if (films.get(filmId) != null) {
                 films.get(filmId)
                         .getGenres()
                         .add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));

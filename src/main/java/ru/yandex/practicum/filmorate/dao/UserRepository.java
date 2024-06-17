@@ -10,13 +10,13 @@ public interface UserRepository {
 
     void delete(int userId);
 
-    User update(User user);
+    void update(User user);
 
     Optional<User> getById(int userId);
 
     List<User> getAll();
 
-    User addFriend(int userId, int friendId);
+    void addFriend(int userId, int friendId);
 
     void deleteFriend(int userId, int friendId);
 

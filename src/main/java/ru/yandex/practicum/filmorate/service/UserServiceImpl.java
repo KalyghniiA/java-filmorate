@@ -65,11 +65,6 @@ public class UserServiceImpl implements UserService {
         User user = userStorage.getById(id).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", id)));
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
 
-
-        if (user.getFriends().contains(friendId)) {
-            return user;
-        }
-
         userStorage.addFriend(id, friendId);
         return userStorage.getById(id).orElseThrow();
     }
