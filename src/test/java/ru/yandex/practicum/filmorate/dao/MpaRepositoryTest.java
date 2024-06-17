@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Import;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -19,10 +20,14 @@ public class MpaRepositoryTest {
 
     @Test
     public void getRatingById() {
-        Mpa mpa = mpaRepository.getRatingById(1);
+        Optional<Mpa> mpaOptional = mpaRepository.getRatingById(1);
 
-        assertThat(mpa).hasFieldOrPropertyWithValue("name", "G");
-        assertThat(mpa).hasFieldOrPropertyWithValue("id", 1);
+        assertThat(mpaOptional)
+                .isPresent()
+                .hasValueSatisfying(mpa -> {
+                    assertThat(mpa).hasFieldOrPropertyWithValue("name", "G");
+                    assertThat(mpa).hasFieldOrPropertyWithValue("id", 1);
+                });
     }
 
     @Test

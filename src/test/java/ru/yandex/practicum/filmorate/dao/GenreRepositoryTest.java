@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Import;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -19,10 +20,14 @@ public class GenreRepositoryTest {
 
     @Test
     public void getGenreById() {
-        Genre genre = genreRepository.getGenreById(1);
+        Optional<Genre> genreOptional = genreRepository.getGenreById(1);
 
-        assertThat(genre).hasFieldOrPropertyWithValue("name", "Комедия");
-        assertThat(genre).hasFieldOrPropertyWithValue("id", 1);
+        assertThat(genreOptional)
+                .isPresent()
+                .hasValueSatisfying(genre -> {
+                    assertThat(genre).hasFieldOrPropertyWithValue("name", "Комедия");
+                    assertThat(genre).hasFieldOrPropertyWithValue("id", 1);
+                });
     }
 
     @Test
