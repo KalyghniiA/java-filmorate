@@ -1,14 +1,13 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Data;
-import ru.yandex.practicum.filmorate.util.filmEnum.Genre;
-import ru.yandex.practicum.filmorate.util.filmEnum.Rating;
+import lombok.*;
 import ru.yandex.practicum.filmorate.util.validateAnotation.dateRelease.ValidDateRelease;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
 
 
 @Data
@@ -25,9 +24,6 @@ public class Film {
     @NotNull(message = "Передано пустое значение длительности фильма")
     @Positive(message = "Передано отрицательное значение длительности фильма")
     private final Integer duration;
-    @NotNull(message = "Не указан жанр, либо указан неверно")
-    private final Genre genre;
-    @NotNull(message = "Не указан рейтинг, либо указан не верно")
-    private final Rating rating;
-    private Set<Integer> likes = new HashSet<>();
+    private Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+    private Mpa mpa;
 }

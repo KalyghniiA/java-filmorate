@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,9 +19,11 @@ public class ErrorHandler {
         return new ErrorResponse("film", e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler({MethodArgumentNotValidException.class,
+            DuplicateKeyException.class,
+            ValidationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handlerValidationException(MethodArgumentNotValidException e) {
+    public ErrorResponse handlerValidationException(RuntimeException e) {
         log.error("Error", e);
         return new ErrorResponse("film", e.getMessage());
     }
@@ -31,4 +34,5 @@ public class ErrorHandler {
         log.error("Error", e);
         return new ErrorResponse("film", e.getMessage());
     }
+
 }

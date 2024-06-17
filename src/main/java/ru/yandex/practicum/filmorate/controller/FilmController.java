@@ -5,8 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.InFilmService;
+import ru.yandex.practicum.filmorate.service.GenreService;
+import ru.yandex.practicum.filmorate.service.MpaService;
+
 
 import javax.validation.Valid;
 import java.util.*;
@@ -15,10 +19,14 @@ import java.util.*;
 @Slf4j
 public class FilmController {
     private final FilmService filmService;
+    private final GenreService genreService;
+    private final MpaService mpaService;
 
     @Autowired
-    public FilmController(InFilmService filmService) {
+    public FilmController(FilmService filmService, GenreService genreService, MpaService mpaService) {
         this.filmService = filmService;
+        this.genreService = genreService;
+        this.mpaService = mpaService;
     }
 
     @GetMapping(value = "/films")
@@ -75,5 +83,37 @@ public class FilmController {
         Collection<Film> films = filmService.getPopular(count);
         log.info(String.format("Отправлены популярные фильмы в количестве %s", count));
         return films;
+    }
+
+    @GetMapping("/genres")
+    public Collection<Genre> getGenres() {
+        log.info("Получен GET запрос на получение списка жанров");
+        Collection<Genre> genres = genreService.getGenres();
+        log.info("Отправлены жанры");
+        return genres;
+    }
+
+    @GetMapping("/genres/{id}")
+    public Genre getGenreById(@PathVariable Integer id) {
+        log.info(String.format("Получен GET запрос на получение имени жанра с id %s", id));
+        Genre parameter = genreService.getGenreById(id);
+        log.info(String.format("Отправлено имя жанра с id %s", id));
+        return parameter;
+    }
+
+    @GetMapping("/mpa")
+    public Collection<Mpa> getRating() {
+        log.info("Получен GET запрос на получение списка рейтингов");
+        Collection<Mpa> ratings = mpaService.getRatings();
+        log.info("Отправлены рейтинги");
+        return ratings;
+    }
+
+    @GetMapping("/mpa/{id}")
+    public Mpa getRatingById(@PathVariable Integer id) {
+        log.info(String.format("Получен GET запрос на получение рейтинга c id %s", id));
+        Mpa parameter = mpaService.getRatingById(id);
+        log.info(String.format("Отправлено название рейтинга c id  %s", id));
+        return parameter;
     }
 }

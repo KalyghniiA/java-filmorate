@@ -4,8 +4,6 @@ import lombok.*;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
 
 @Data
 public class User {
@@ -20,5 +18,4 @@ public class User {
     @NotNull(message = "Пусто значение даты дня рождения")
     @Past(message = "День рождения не валиден")
     private final LocalDate birthday;
-    private final Map<Integer, Boolean> friends = new HashMap<>();
 }
