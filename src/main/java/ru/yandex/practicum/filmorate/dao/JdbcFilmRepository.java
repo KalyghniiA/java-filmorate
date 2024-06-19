@@ -116,7 +116,7 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getTopPopular(int count) {
+    public List<Film> getTopPopular(Integer count) {
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -136,7 +136,7 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
                 GROUP BY ID, FILM_GENRES.GENRE_ID
                 ORDER BY LIKE_COUNT DESC
-                LIMIT :count;
+                LIMIT :count
                 """;
         Map<String, Object> param = Map.of("count", count);
 
@@ -144,7 +144,7 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilmsByYearAndGenre(int count, int year, int genreId) {
+    public List<Film> getPopularFilmsByYear(Integer year) {
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -162,15 +162,74 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                          JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE YEAR(FILMS.RELEASE_DATE) = :year AND GENRE_ID(GENRES.GENRE_ID) = :genreId
+                WHERE YEAR(FILMS.RELEASE_DATE) = :year
                 GROUP BY ID, FILM_GENRES.GENRE_ID
                 ORDER BY LIKE_COUNT DESC
-                LIMIT :count;
                 """;
-        Map<String, Object> param = Map.of("count", count, "year", year, "genreId", genreId);
+
+        Map<String, Object> param = Map.of("year", year);
 
         return getFilms(sql, param);
     }
+
+    @Override
+    public List<Film> getPopularFilmsByGenre(Integer genreId) {
+        String sql = """
+                SELECT
+                    FILMS.FILM_ID AS ID,
+                    FILMS.NAME AS FILM_NAME,
+                    DESCRIPTION,
+                    RELEASE_DATE,
+                    DURATION,
+                    RATING AS RATING_ID,
+                    RATINGS.NAME AS RATING_NAME,
+                    GENRES.GENRE_ID AS GENRE_ID,
+                    GENRES.NAME AS GENRE_NAME,
+                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
+                FROM FILMS
+                         JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                         LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
+                WHERE GENRES.GENRE_ID = :genreId
+                GROUP BY ID, FILM_GENRES.GENRE_ID
+                ORDER BY LIKE_COUNT DESC
+                """;
+
+        Map<String, Object> param = Map.of("genreId", genreId);
+
+        return getFilms(sql, param);
+    }
+
+    @Override
+    public List<Film> getPopularFilmsByYearAndGenre(Integer year, Integer genreId) {
+        String sql = """
+                SELECT
+                    FILMS.FILM_ID AS ID,
+                    FILMS.NAME AS FILM_NAME,
+                    DESCRIPTION,
+                    RELEASE_DATE,
+                    DURATION,
+                    RATING AS RATING_ID,
+                    RATINGS.NAME AS RATING_NAME,
+                    GENRES.GENRE_ID AS GENRE_ID,
+                    GENRES.NAME AS GENRE_NAME,
+                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
+                FROM FILMS
+                         JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                         LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
+                WHERE YEAR(FILMS.RELEASE_DATE) = :year AND GENRES.GENRE_ID = :genreId
+                GROUP BY ID, FILM_GENRES.GENRE_ID
+                ORDER BY LIKE_COUNT DESC
+                """;
+
+        Map<String, Object> param = Map.of("year", year, "genreId", genreId);
+
+        return getFilms(sql, param);
+    }
+
 
     private List<Film> getFilms(String sql, Map<String, Object> param) {
         Map<Integer, Film> films = jdbc.query(sql, param, new FilmsExtractor());

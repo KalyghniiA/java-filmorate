@@ -11,10 +11,9 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.GenreService;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
-
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
-import java.util.*;
+import java.util.Collection;
 
 @RestController
 @Slf4j
@@ -72,16 +71,16 @@ public class FilmController {
 
     @DeleteMapping(value = "/films/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeLike(@PathVariable Integer id,@PathVariable Integer userId) {
+    public void removeLike(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("Получен DELETE запрос на удаление лайка");
         filmService.removeLike(id, userId);
         log.info(String.format("Удален лайк у фильма с id %s", id));
     }
 
     @GetMapping(value = "/films/popular")
-    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count,
-                                            @RequestParam(defaultValue = "0") int genreId,
-                                            @RequestParam(required = false) @Min(1895) int year) {
+    public Collection<Film> getPopularFilms(@RequestParam(required = false) @Min(0) Integer count,
+                                            @RequestParam(defaultValue = "0") Integer genreId,
+                                            @RequestParam(required = false) @Min(1895) Integer year) {
         log.info("Получен GET запрос на получение популярных фильмов");
         Collection<Film> films = filmService.getPopular(count, genreId, year);
         log.info(String.format("Отправлены популярные фильмы в количестве %s", count));
