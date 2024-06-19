@@ -2,17 +2,18 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.dao.GenreRepository;
 import ru.yandex.practicum.filmorate.dao.LikeRepository;
 import ru.yandex.practicum.filmorate.dao.MpaRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class FilmServiceImpl implements FilmService {
@@ -107,7 +108,7 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getPopular(int count) {
-        return filmRepository.getTopPopular(count);
+    public List<Film> getPopular(int count, int year, int genreId) {
+        return filmRepository.getPopularFilmsByYearAndGenre(count, year, genreId);
     }
 }
