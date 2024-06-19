@@ -12,7 +12,7 @@ import ru.yandex.practicum.filmorate.model.ErrorResponse;
 @RestControllerAdvice(basePackages = "ru.yandex.practicum.filmorate.controller")
 @Slf4j
 public class ErrorHandler {
-    @ExceptionHandler(NotFoundException.class)
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handlerNotFoundException(NotFoundException e) {
         log.error("Error", e);
