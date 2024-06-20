@@ -14,7 +14,7 @@ public class JdbcLikeRepository implements LikeRepository {
     @Override
     public void addLike(int filmId, int userId) {
         Map<String, Object> param = Map.of("film_id", filmId, "user_id", userId);
-        String sql = "MERGE INTO LIKES(film_id, user_id) VALUES ( :film_id, :user_id );";
+        String sql = "INSERT INTO LIKES(film_id, user_id) VALUES ( :film_id, :user_id );";
         jdbc.update(sql, param);
     }
 

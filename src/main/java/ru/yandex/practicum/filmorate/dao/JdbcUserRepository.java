@@ -90,7 +90,7 @@ public class JdbcUserRepository implements UserRepository {
 
     @Override
     public void addFriend(int userId, int friendId) {
-        String sql = "MERGE INTO FRIENDS(USER_ID, FRIEND_ID) VALUES ( :user_id, :friend_id );";
+        String sql = "INSERT INTO FRIENDS(USER_ID, FRIEND_ID) VALUES ( :user_id, :friend_id );";
         Map<String, Object> param = Map.of(
                 "user_id", userId,
                 "friend_id", friendId
