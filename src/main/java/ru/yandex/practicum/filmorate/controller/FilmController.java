@@ -77,6 +77,14 @@ public class FilmController {
         log.info(String.format("Удален лайк у фильма с id %s", id));
     }
 
+    @DeleteMapping(value = "/films/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFilm(@PathVariable Integer id) {
+        log.info("Получен DELETE запрос на удаление фильма");
+        filmService.delete(id);
+        log.info(String.format("Удален фильм с id %s", id));
+    }
+
     @GetMapping(value = "/films/popular")
     public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
         log.info("Получен GET запрос на получение популярных фильмов");
