@@ -135,30 +135,6 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilmsByYearAndGenre(int count, int year, int genreId) {
-        String sql = """
-                SELECT
-                    FILMS.FILM_ID AS ID,
-                    FILMS.NAME AS FILM_NAME,
-                    DESCRIPTION,
-                    RELEASE_DATE,
-                    DURATION,
-                    RATING AS RATING_ID,
-                    RATINGS.NAME AS RATING_NAME,
-                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
-                FROM FILMS
-                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
-                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                GROUP BY ID
-                ORDER BY LIKE_COUNT DESC
-                LIMIT :count
-                """;
-        Map<String, Object> param = Map.of("count", count, "year", year, "genreId", genreId);
-
-        return getFilms(sql, param);
-    }
-
-    @Override
     public List<Film> getFilmsToDirectorSortByYear(int directorId) {
         String sql = """
                 SELECT
@@ -173,6 +149,8 @@ public class JdbcFilmRepository implements FilmRepository {
                 FROM FILMS
                          JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
+                         
+                         
                 WHERE FILMS.FILM_ID IN (
                     SELECT FILM_ID FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :director_id
                     )
@@ -211,7 +189,7 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilmsByYear(Integer year) {
+    public List<Film> getPopularFilmsByYear(Integer count, Integer year) {
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -236,7 +214,7 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilmsByGenre(Integer genreId) {
+    public List<Film> getPopularFilmsByGenre(Integer count, Integer genreId) {
       //посмотреть
         String sql = """
                 SELECT
@@ -264,7 +242,7 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilmsByYearAndGenre(Integer year, Integer genreId) {
+    public List<Film> getPopularFilmsByYearAndGenre(Integer count, Integer year, Integer genreId) {
       //посмотреть
         String sql = """
                 SELECT
@@ -275,8 +253,6 @@ public class JdbcFilmRepository implements FilmRepository {
                     DURATION,
                     RATING AS RATING_ID,
                     RATINGS.NAME AS RATING_NAME,
-                    GENRES.GENRE_ID AS GENRE_ID,
-                    GENRES.NAME AS GENRE_NAME,
                     COUNT(LIKES.FILM_ID) AS LIKE_COUNT
                 FROM FILMS
                          JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID

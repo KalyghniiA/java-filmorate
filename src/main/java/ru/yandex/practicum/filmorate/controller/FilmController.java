@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.service.MpaService;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 @Slf4j

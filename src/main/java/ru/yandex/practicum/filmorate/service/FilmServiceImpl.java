@@ -139,13 +139,14 @@ public class FilmServiceImpl implements FilmService {
         if (genreId == 0 && year == null) {
             films = filmRepository.getTopPopular(count);
         } else if (year == null) {
-            films = filmRepository.getPopularFilmsByGenre(genreId);
+            films = filmRepository.getPopularFilmsByGenre(count, genreId);
         } else if (genreId == 0) {
-            films = filmRepository.getPopularFilmsByYear(year);
+            films = filmRepository.getPopularFilmsByYear(count, year);
         } else {
-            films = filmRepository.getPopularFilmsByYearAndGenre(year, genreId);
+            films = filmRepository.getPopularFilmsByYearAndGenre(count, year, genreId);
         }
         return fillingFilms(films);
+    }
 
     @Override
     public List<Film> getFilmsToDirector(int directorId, String sortBy) {
