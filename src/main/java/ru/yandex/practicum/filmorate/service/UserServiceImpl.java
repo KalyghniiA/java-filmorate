@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -22,11 +21,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User get(int id) {
-        try {
-            return userStorage.getById(id).orElseThrow();
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
-        }
+        return userStorage.getById(id)
+                .orElseThrow(
+                        () -> new NotFoundException(String.format("Пользователя с id %s нет в базе", id))
+                );
     }
 
     @Override

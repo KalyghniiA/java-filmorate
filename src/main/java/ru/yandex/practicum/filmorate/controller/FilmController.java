@@ -77,6 +77,14 @@ public class FilmController {
         log.info(String.format("Удален лайк у фильма с id %s", id));
     }
 
+    @DeleteMapping(value = "/films/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFilm(@PathVariable Integer id) {
+        log.info("Получен DELETE запрос на удаление фильма");
+        filmService.delete(id);
+        log.info(String.format("Удален фильм с id %s", id));
+    }
+
     @GetMapping(value = "/films/popular")
     public Collection<Film> getPopularFilms(@RequestParam(required = false) @Min(0) Integer count,
                                             @RequestParam(defaultValue = "0") Integer genreId,
@@ -117,5 +125,16 @@ public class FilmController {
         Mpa parameter = mpaService.getRatingById(id);
         log.info(String.format("Отправлено название рейтинга c id  %s", id));
         return parameter;
+    }
+
+    @GetMapping("/films/director/{directorId}")
+    public List<Film> getFilmsByDirector(
+            @PathVariable Integer directorId,
+            @RequestParam String sortBy
+    ) {
+        log.info(String.format("Получен запрос на получение фильмов режиссера %s отсортированный по %s", directorId, sortBy));
+        List<Film> films = filmService.getFilmsToDirector(directorId, sortBy);
+        log.info("Отправлены фильмы режиссера");
+        return films;
     }
 }

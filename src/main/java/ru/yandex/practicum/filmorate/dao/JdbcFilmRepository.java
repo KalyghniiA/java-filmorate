@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmExtractor;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmsExtractor;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -27,12 +28,8 @@ public class JdbcFilmRepository implements FilmRepository {
                        RELEASE_DATE,
                        DURATION,
                        RATING AS RATING_ID,
-                       RATINGS.NAME AS RATING_NAME,
-                       GENRES.GENRE_ID AS GENRE_ID,
-                       GENRES.NAME AS GENRE_NAME
+                       RATINGS.NAME AS RATING_NAME
                 FROM FILMS
-                LEFT JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                 JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                 WHERE FILMS.FILM_ID = :film_id;
                 """;
@@ -61,6 +58,7 @@ public class JdbcFilmRepository implements FilmRepository {
         jdbc.update(sql, new MapSqlParameterSource().addValues(paramFilm), keyHolder, new String[]{"film_id"});
         film.setId(keyHolder.getKeyAs(Integer.class));
         saveGenresForFilm(film.getId(), film.getGenres());
+        saveDirectorsForFilm(film.getId(), film.getDirectors());
         return film;
     }
 
@@ -87,6 +85,7 @@ public class JdbcFilmRepository implements FilmRepository {
 
         jdbc.update(sql, param);
         saveGenresForFilm(film.getId(), film.getGenres());
+        saveDirectorsForFilm(film.getId(), film.getDirectors());
     }
 
     @Override
@@ -104,12 +103,8 @@ public class JdbcFilmRepository implements FilmRepository {
                        RELEASE_DATE,
                        DURATION,
                        FILMS.RATING AS RATING_ID,
-                       RATINGS.NAME AS RATING_NAME,
-                       GENRES.GENRE_ID AS GENRE_ID,
-                       GENRES.NAME AS GENRE_NAME
+                       RATINGS.NAME AS RATING_NAME
                 FROM FILMS
-                JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                 JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID;
                 """;
         return getFilms(sql, Map.of());
@@ -126,19 +121,91 @@ public class JdbcFilmRepository implements FilmRepository {
                     DURATION,
                     RATING AS RATING_ID,
                     RATINGS.NAME AS RATING_NAME,
-                    GENRES.GENRE_ID AS GENRE_ID,
-                    GENRES.NAME AS GENRE_NAME,
                     COUNT(LIKES.FILM_ID) AS LIKE_COUNT
                 FROM FILMS
-                         JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                         LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                          JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                GROUP BY ID, FILM_GENRES.GENRE_ID
+                GROUP BY ID
+                ORDER BY LIKE_COUNT DESC
+                LIMIT :count;
+                """;
+        Map<String, Object> param = Map.of("count", count);
+
+        return getFilms(sql, param);
+    }
+
+    @Override
+    public List<Film> getPopularFilmsByYearAndGenre(int count, int year, int genreId) {
+        String sql = """
+                SELECT
+                    FILMS.FILM_ID AS ID,
+                    FILMS.NAME AS FILM_NAME,
+                    DESCRIPTION,
+                    RELEASE_DATE,
+                    DURATION,
+                    RATING AS RATING_ID,
+                    RATINGS.NAME AS RATING_NAME,
+                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
+                FROM FILMS
+                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
+                GROUP BY ID
                 ORDER BY LIKE_COUNT DESC
                 LIMIT :count
                 """;
-        Map<String, Object> param = Map.of("count", count);
+        Map<String, Object> param = Map.of("count", count, "year", year, "genreId", genreId);
+
+        return getFilms(sql, param);
+    }
+
+    @Override
+    public List<Film> getFilmsToDirectorSortByYear(int directorId) {
+        String sql = """
+                SELECT
+                    FILMS.FILM_ID AS ID,
+                    FILMS.NAME AS FILM_NAME,
+                    DESCRIPTION,
+                    RELEASE_DATE,
+                    DURATION,
+                    RATING AS RATING_ID,
+                    RATINGS.NAME AS RATING_NAME,
+                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
+                FROM FILMS
+                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
+                WHERE FILMS.FILM_ID IN (
+                    SELECT FILM_ID FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :director_id
+                    )
+                GROUP BY ID
+                ORDER BY YEAR(RELEASE_DATE);
+                """;
+        Map<String, Object> param = Map.of("director_id", directorId);
+
+        return getFilms(sql, param);
+    }
+
+    @Override
+    public List<Film> getFilmsToDirectorSortByLikes(int directorId) {
+        String sql = """
+                SELECT
+                    FILMS.FILM_ID AS ID,
+                    FILMS.NAME AS FILM_NAME,
+                    DESCRIPTION,
+                    RELEASE_DATE,
+                    DURATION,
+                    RATING AS RATING_ID,
+                    RATINGS.NAME AS RATING_NAME,
+                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
+                FROM FILMS
+                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
+                WHERE FILMS.FILM_ID IN (
+                    SELECT FILM_ID FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :director_id
+                    )
+                GROUP BY ID
+                ORDER BY LIKE_COUNT DESC;
+                """;
+        Map<String, Object> param = Map.of("director_id", directorId);
 
         return getFilms(sql, param);
     }
@@ -154,16 +221,12 @@ public class JdbcFilmRepository implements FilmRepository {
                     DURATION,
                     RATING AS RATING_ID,
                     RATINGS.NAME AS RATING_NAME,
-                    GENRES.GENRE_ID AS GENRE_ID,
-                    GENRES.NAME AS GENRE_NAME,
                     COUNT(LIKES.FILM_ID) AS LIKE_COUNT
                 FROM FILMS
-                         JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                         LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
                          JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
                 WHERE YEAR(FILMS.RELEASE_DATE) = :year
-                GROUP BY ID, FILM_GENRES.GENRE_ID
+                GROUP BY ID
                 ORDER BY LIKE_COUNT DESC
                 """;
 
@@ -174,6 +237,7 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getPopularFilmsByGenre(Integer genreId) {
+      //посмотреть
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -183,8 +247,6 @@ public class JdbcFilmRepository implements FilmRepository {
                     DURATION,
                     RATING AS RATING_ID,
                     RATINGS.NAME AS RATING_NAME,
-                    GENRES.GENRE_ID AS GENRE_ID,
-                    GENRES.NAME AS GENRE_NAME,
                     COUNT(LIKES.FILM_ID) AS LIKE_COUNT
                 FROM FILMS
                          JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
@@ -203,6 +265,7 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getPopularFilmsByYearAndGenre(Integer year, Integer genreId) {
+      //посмотреть
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -232,8 +295,7 @@ public class JdbcFilmRepository implements FilmRepository {
 
 
     private List<Film> getFilms(String sql, Map<String, Object> param) {
-        Map<Integer, Film> films = jdbc.query(sql, param, new FilmsExtractor());
-        return films.values().stream().toList();
+        return jdbc.query(sql, param, new FilmsExtractor());
     }
 
     private void saveGenresForFilm(int filmId, Set<Genre> genres) {
@@ -253,5 +315,23 @@ public class JdbcFilmRepository implements FilmRepository {
 
         jdbc.batchUpdate(sqlDelete, batchOfInputs);
         jdbc.batchUpdate(sqlInsert, batchOfInputs);
+    }
+
+    private void saveDirectorsForFilm(int filmId, Set<Director> directors) {
+       String sqlDelete = "DELETE FROM FILM_DIRECTORS WHERE FILM_ID = :film_id AND DIRECTOR_ID = :director_id;";
+       String sqlInsert = "INSERT INTO FILM_DIRECTORS (FILM_ID, DIRECTOR_ID) VALUES ( :film_id, :director_id );";
+
+       Map<String, Object>[] batchOfInputs = new HashMap[directors.size()];
+       int count = 0;
+
+       for (Director director: directors) {
+           Map<String, Object> param = new HashMap<>();
+           param.put("film_id", filmId);
+           param.put("director_id", director.getId());
+           batchOfInputs[count++] = param;
+       }
+
+       jdbc.batchUpdate(sqlDelete, batchOfInputs);
+       jdbc.batchUpdate(sqlInsert, batchOfInputs);
     }
 }
