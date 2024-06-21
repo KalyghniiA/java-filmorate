@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.dao.extractors;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.ResultSet;
@@ -22,13 +21,6 @@ public class FilmExtractor implements ResultSetExtractor<Film> {
             );
             film.setId(rs.getInt("ID"));
             film.setMpa(new Mpa(rs.getInt("RATING_ID"), rs.getString("RATING_NAME")));
-            int idGenre = rs.getInt("GENRE_ID");
-            if (idGenre != 0) {
-                film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
-                while (rs.next()) {
-                    film.getGenres().add(new Genre(rs.getInt("GENRE_ID"), rs.getString("GENRE_NAME")));
-                }
-            }
         }
         return film;
     }

@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.service.MpaService;
 
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import java.util.*;
 
 @RestController
@@ -79,11 +78,9 @@ public class FilmController {
     }
 
     @GetMapping(value = "/films/popular")
-    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count,
-                                            @RequestParam(defaultValue = "0") int genreId,
-                                            @RequestParam(required = false) @Min(1895) int year) {
+    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
         log.info("Получен GET запрос на получение популярных фильмов");
-        Collection<Film> films = filmService.getPopular(count, genreId, year);
+        Collection<Film> films = filmService.getPopular(count);
         log.info(String.format("Отправлены популярные фильмы в количестве %s", count));
         return films;
     }
@@ -118,5 +115,16 @@ public class FilmController {
         Mpa parameter = mpaService.getRatingById(id);
         log.info(String.format("Отправлено название рейтинга c id  %s", id));
         return parameter;
+    }
+
+    @GetMapping("/films/director/{directorId}")
+    public List<Film> getFilmsByDirector(
+            @PathVariable Integer directorId,
+            @RequestParam String sortBy
+    ) {
+        log.info(String.format("Получен запрос на получение фильмов режиссера %s отсортированный по %s", directorId, sortBy));
+        List<Film> films = filmService.getFilmsToDirector(directorId, sortBy);
+        log.info("Отправлены фильмы режиссера");
+        return films;
     }
 }
