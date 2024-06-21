@@ -35,6 +35,20 @@ create table if not exists RATINGS
     NAME      CHARACTER VARYING(10) not null
 );
 
+create table if not exists DIRECTORS
+(
+    DIRECTOR_ID INTEGER auto_increment not null primary key ,
+    NAME        CHARACTER VARYING(255) not null
+    );
+
+create table if not exists FILM_DIRECTORS
+(
+    FILM_ID     INTEGER not null,
+    DIRECTOR_ID INTEGER not null,
+    constraint "FILM_DIRECTOR_pk"
+        primary key (FILM_ID, DIRECTOR_ID)
+);
+
 create table if not exists FILMS
 (
     FILM_ID      INTEGER auto_increment

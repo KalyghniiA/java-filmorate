@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.extractors.GenreExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.GenresForFilmExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.GenresForFilmsExtractor;
 import ru.yandex.practicum.filmorate.dao.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -23,10 +25,10 @@ public class JdbcGenreRepository implements GenreRepository {
     }
 
     @Override
-    public List<Genre> getGenresById(List<Integer> genresId) {
+    public Set<Genre> getGenresById(List<Integer> genresId) {
         String sql = "SELECT GENRE_ID, NAME FROM GENRES WHERE GENRE_ID IN ( :genres_id )";
         Map<String, Object> param = Map.of("genres_id", genresId);
-        return jdbc.query(sql, param, new GenreRowMapper());
+        return jdbc.query(sql, param, new GenresForFilmExtractor());
     }
 
     @Override
@@ -35,4 +37,31 @@ public class JdbcGenreRepository implements GenreRepository {
         return jdbc.query(sql, new GenreRowMapper());
     }
 
+    @Override
+    public Set<Genre> getGenresByFilm(int filmId) {
+        String sql = """
+                SELECT  FILM_GENRES.GENRE_ID AS GENRE_ID,
+                       NAME
+                FROM FILM_GENRES
+                JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                WHERE FILM_ID = :film_id
+                """;
+        Map<String, Object> param = Map.of("film_id", filmId);
+        return jdbc.query(sql, param, new GenresForFilmExtractor());
+    }
+
+    @Override
+    public Map<Integer, Set<Genre>> getGenresByFilms(Collection<Integer> filmsId) {
+        String sql = """
+                SELECT FILM_ID,
+                       FILM_GENRES.GENRE_ID AS GENRE_ID,
+                       NAME
+                FROM FILM_GENRES
+                    LEFT JOIN GENRES ON GENRES.GENRE_ID = FILM_GENRES.GENRE_ID
+                WHERE FILM_ID IN (:films_id);
+                """;
+        Map<String, Object> param = Map.of("films_id", filmsId);
+
+        return jdbc.query(sql, param, new GenresForFilmsExtractor());
+    }
 }
