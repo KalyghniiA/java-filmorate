@@ -9,10 +9,12 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
+
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 @Service
 public class FilmServiceImpl implements FilmService {
@@ -131,8 +133,18 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getPopular(int count) {
-        return fillingFilms(filmRepository.getTopPopular(count));
+    public List<Film> getPopular(Integer count, Integer genreId, Integer year) { //для разных запросов
+        List<Film> films;
+        if (genreId == 0 && year == null) {
+            films = filmRepository.getTopPopular(count);
+        } else if (year == null) {
+            films = filmRepository.getPopularFilmsByGenre(count, genreId);
+        } else if (genreId == 0) {
+            films = filmRepository.getPopularFilmsByYear(count, year);
+        } else {
+            films = filmRepository.getPopularFilmsByYearAndGenre(count, year, genreId);
+        }
+        return fillingFilms(films);
     }
 
     @Override
