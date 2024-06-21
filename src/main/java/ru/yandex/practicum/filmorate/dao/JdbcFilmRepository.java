@@ -149,8 +149,6 @@ public class JdbcFilmRepository implements FilmRepository {
                 FROM FILMS
                          JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
                          LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                         
-                         
                 WHERE FILMS.FILM_ID IN (
                     SELECT FILM_ID FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :director_id
                     )
