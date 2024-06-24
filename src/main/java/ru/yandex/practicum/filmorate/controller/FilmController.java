@@ -138,4 +138,15 @@ public class FilmController {
         log.info("Отправлены фильмы режиссера");
         return films;
     }
+
+    @GetMapping("/films/common")
+    public List<Film> getCommonFilms(
+            @RequestParam Integer userId,
+            @RequestParam Integer friendId
+    ) {
+        log.info(String.format("Получен GET запрос на получение общих фильмов пользователя %s и %s", userId, friendId));
+        List<Film> films = filmService.getCommonFilms(userId, friendId);
+        log.info("Отправлены общие фильмы");
+        return films;
+    }
 }
