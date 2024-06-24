@@ -105,7 +105,8 @@ public class JdbcFilmRepository implements FilmRepository {
                        FILMS.RATING AS RATING_ID,
                        RATINGS.NAME AS RATING_NAME
                 FROM FILMS
-                JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID;
+                JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                GROUP BY ID;
                 """;
         return getFilms(sql, Map.of());
     }
@@ -213,7 +214,6 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getPopularFilmsByGenre(Integer count, Integer genreId) {
-      //посмотреть
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -241,7 +241,6 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getPopularFilmsByYearAndGenre(Integer count, Integer year, Integer genreId) {
-      //посмотреть
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -267,6 +266,35 @@ public class JdbcFilmRepository implements FilmRepository {
         return getFilms(sql, param);
     }
 
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        String sql = """
+                SELECT FILMS.FILM_ID AS ID,
+                       FILMS.NAME AS FILM_NAME,
+                       DESCRIPTION,
+                       RELEASE_DATE,
+                       DURATION,
+                       RATING AS RATING_ID,
+                       RATINGS.NAME AS RATING_NAME,
+                       COUNT(LIKES.FILM_ID) AS LIKE_COUNT
+                FROM FILMS
+                         JOIN RATINGS ON FILMS.RATING = RATINGS.RATING_ID
+                         LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
+                WHERE FILMS.FILM_ID IN (SELECT DISTINCT LIKES.FILM_ID
+                                        FROM LIKES
+                                        WHERE USER_ID = :user_id
+                                        INTERSECT
+                                        SELECT DISTINCT LIKES.FILM_ID
+                                        FROM LIKES
+                                        WHERE  USER_ID = :friend_id)
+                GROUP BY ID
+                ORDER BY LIKE_COUNT DESC;
+                """;
+
+        Map<String, Object> param = Map.of("user_id", userId, "friend_id", friendId);
+
+        return getFilms(sql, param);
+    }
 
     private List<Film> getFilms(String sql, Map<String, Object> param) {
         return jdbc.query(sql, param, new FilmsExtractor());
