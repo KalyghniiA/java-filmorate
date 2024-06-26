@@ -98,7 +98,6 @@ public class UserController {
     @GetMapping(value = "/users/{id}/recommendations")
     public List<Optional<Film>> getRecommendations(@PathVariable int id) {
         log.info("Получен GET запрос на получение рекомендаций");
-        log.info(String.format("Список рекомендаций для пользователя с id %s отправлен", id));
         return userService.getRecommendations(id);
     }
 }

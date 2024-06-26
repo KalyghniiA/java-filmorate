@@ -29,4 +29,6 @@ public interface FilmRepository {
     List<Film> getFilmsToDirectorSortByLikes(int directorId);
 
     List<Film> getCommonFilms(int userId, int friendId);
+
+    List<Integer> getLikedFilmsByUserId(int userId);
 }

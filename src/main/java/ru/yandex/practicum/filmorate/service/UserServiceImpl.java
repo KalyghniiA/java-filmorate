@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
-import ru.yandex.practicum.filmorate.dao.LikeRepository;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -19,13 +18,11 @@ import java.util.Optional;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userStorage;
-    private final LikeRepository likeRepository;
     private final FilmRepository filmRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userStorage, LikeRepository likeRepository, FilmRepository filmRepository) {
+    public UserServiceImpl(UserRepository userStorage, FilmRepository filmRepository) {
         this.userStorage = userStorage;
-        this.likeRepository = likeRepository;
         this.filmRepository = filmRepository;
     }
 
@@ -100,12 +97,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<Optional<Film>> getRecommendations(int userId) {
-        List<Integer> userFilms = likeRepository.getLikedFilmsByUserId(userId);
+        List<Integer> userFilms = filmRepository.getLikedFilmsByUserId(userId);
         List<User> users = getAll();
         HashMap<Integer, List<Integer>> likes = new HashMap<>();
         for (User user : users) {
             if (user.getId() != userId) {
-                likes.put(user.getId(), likeRepository.getLikedFilmsByUserId(user.getId()));
+                likes.put(user.getId(), filmRepository.getLikedFilmsByUserId(user.getId()));
             }
         }
         int maxCommonElementsCount = 0;
@@ -130,6 +127,7 @@ public class UserServiceImpl implements UserService {
         for (Integer filmId : films) {
             recommendations.add(filmRepository.getById(filmId));
         }
+        log.info(String.format("Список рекомендаций для пользователя с id %s отправлен", userId));
         return recommendations;
     }
 }

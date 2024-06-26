@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmExtractor;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmsExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.LikedFilmsForUserIdExtractor;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -296,6 +297,17 @@ public class JdbcFilmRepository implements FilmRepository {
         return getFilms(sql, param);
     }
 
+    @Override
+    public List<Integer> getLikedFilmsByUserId(int userId) {
+        String sql = """
+                SELECT  LIKES.FILM_ID
+                FROM LIKES
+                WHERE USER_ID = :user_id
+                """;
+        Map<String, Object> param = Map.of("user_id", userId);
+        return jdbc.query(sql, param, new LikedFilmsForUserIdExtractor());
+    }
+
     private List<Film> getFilms(String sql, Map<String, Object> param) {
         return jdbc.query(sql, param, new FilmsExtractor());
     }
@@ -320,20 +332,20 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     private void saveDirectorsForFilm(int filmId, Set<Director> directors) {
-       String sqlDelete = "DELETE FROM FILM_DIRECTORS WHERE FILM_ID = :film_id AND DIRECTOR_ID = :director_id;";
-       String sqlInsert = "INSERT INTO FILM_DIRECTORS (FILM_ID, DIRECTOR_ID) VALUES ( :film_id, :director_id );";
+        String sqlDelete = "DELETE FROM FILM_DIRECTORS WHERE FILM_ID = :film_id AND DIRECTOR_ID = :director_id;";
+        String sqlInsert = "INSERT INTO FILM_DIRECTORS (FILM_ID, DIRECTOR_ID) VALUES ( :film_id, :director_id );";
 
-       Map<String, Object>[] batchOfInputs = new HashMap[directors.size()];
-       int count = 0;
+        Map<String, Object>[] batchOfInputs = new HashMap[directors.size()];
+        int count = 0;
 
-       for (Director director: directors) {
-           Map<String, Object> param = new HashMap<>();
-           param.put("film_id", filmId);
-           param.put("director_id", director.getId());
-           batchOfInputs[count++] = param;
-       }
+        for (Director director : directors) {
+            Map<String, Object> param = new HashMap<>();
+            param.put("film_id", filmId);
+            param.put("director_id", director.getId());
+            batchOfInputs[count++] = param;
+        }
 
-       jdbc.batchUpdate(sqlDelete, batchOfInputs);
-       jdbc.batchUpdate(sqlInsert, batchOfInputs);
+        jdbc.batchUpdate(sqlDelete, batchOfInputs);
+        jdbc.batchUpdate(sqlInsert, batchOfInputs);
     }
 }
