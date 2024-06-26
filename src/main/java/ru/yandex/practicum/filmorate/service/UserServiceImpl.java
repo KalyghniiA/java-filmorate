@@ -3,20 +3,30 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.FilmRepository;
+import ru.yandex.practicum.filmorate.dao.LikeRepository;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userStorage;
+    private final LikeRepository likeRepository;
+    private final FilmRepository filmRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userStorage) {
+    public UserServiceImpl(UserRepository userStorage, LikeRepository likeRepository, FilmRepository filmRepository) {
         this.userStorage = userStorage;
+        this.likeRepository = likeRepository;
+        this.filmRepository = filmRepository;
     }
 
     @Override
@@ -86,5 +96,40 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(otherId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", otherId)));
 
         return userStorage.getMutualFriends(id, otherId);
+    }
+
+    @Override
+    public List<Optional<Film>> getRecommendations(int userId) {
+        List<Integer> userFilms = likeRepository.getLikedFilmsByUserId(userId);
+        List<User> users = getAll();
+        HashMap<Integer, List<Integer>> likes = new HashMap<>();
+        for (User user : users) {
+            if (user.getId() != userId) {
+                likes.put(user.getId(), likeRepository.getLikedFilmsByUserId(user.getId()));
+            }
+        }
+        int maxCommonElementsCount = 0;
+        List<Integer> films = new ArrayList<>();
+        for (Integer anotherUserId : likes.keySet()) {
+            List<Integer> likedFilms = likes.get(anotherUserId);
+            int commonSum = 0;
+            for (Integer filmId : userFilms) {
+                for (Integer anotherFilmId : likedFilms) {
+                    if (filmId == anotherFilmId) {
+                        commonSum++;
+                    }
+                }
+            }
+            if (commonSum > maxCommonElementsCount) {
+                maxCommonElementsCount = commonSum;
+                films = likedFilms;
+            }
+        }
+        films.removeAll(userFilms);
+        List<Optional<Film>> recommendations = new ArrayList<>();
+        for (Integer filmId : films) {
+            recommendations.add(filmRepository.getById(filmId));
+        }
+        return recommendations;
     }
 }

@@ -19,16 +19,8 @@ create table if not exists RATINGS
 
 create table if not exists DIRECTORS
 (
-    DIRECTOR_ID INTEGER auto_increment not null primary key ,
+    DIRECTOR_ID INTEGER auto_increment not null primary key,
     NAME        CHARACTER VARYING(255) not null
-    );
-
-create table if not exists FILM_DIRECTORS
-(
-    FILM_ID     INTEGER not null,
-    DIRECTOR_ID INTEGER not null,
-    constraint "FILM_DIRECTOR_pk"
-        primary key (FILM_ID, DIRECTOR_ID)
 );
 
 create table if not exists FILMS
@@ -42,6 +34,16 @@ create table if not exists FILMS
     RATING       INTEGER,
     constraint "FILMS_RATING_RATING_ID_fk"
         foreign key (RATING) references RATINGS
+);
+
+create table if not exists FILM_DIRECTORS
+(
+    FILM_ID     INTEGER not null,
+    DIRECTOR_ID INTEGER not null,
+    constraint FK_FILM_DIRECTORS_FILM_ID
+        foreign key (FILM_ID) references FILMS ON DELETE CASCADE,
+    constraint FK_FILM_DIRECTORS_DIRECTOR_ID
+        foreign key (DIRECTOR_ID) references DIRECTORS ON DELETE CASCADE
 );
 
 create table if not exists GENRES
@@ -63,7 +65,7 @@ create table IF NOT EXISTS FRIENDS
 
 create table if not exists FILM_GENRES
 (
-    FILM_ID INTEGER NOT NULL,
+    FILM_ID  INTEGER NOT NULL,
     GENRE_ID INTEGER NOT NULL,
     constraint FK_FILMGENRES_FILM_ID
         foreign key (FILM_ID) references FILMS ON DELETE CASCADE,
