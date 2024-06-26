@@ -23,6 +23,7 @@ public class FilmServiceImpl implements FilmService {
     private final MpaRepository mpaRepository;
     private final LikeRepository likeRepository;
     private final DirectorRepository directorRepository;
+    private final UserRepository userRepository;
 
 
     @Autowired
@@ -30,12 +31,14 @@ public class FilmServiceImpl implements FilmService {
                            GenreRepository genreRepository,
                            MpaRepository mpaRepository,
                            LikeRepository likeRepository,
-                           DirectorRepository directorRepository) {
+                           DirectorRepository directorRepository,
+                           UserRepository userRepository) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.likeRepository = likeRepository;
         this.directorRepository = directorRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -154,6 +157,16 @@ public class FilmServiceImpl implements FilmService {
             case "likes": return fillingFilms(filmRepository.getFilmsToDirectorSortByLikes(directorId));
             default: throw new ValidationException("Переданный параметр сортировки не поддерживается");
         }
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        userRepository.getById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
+        userRepository.getById(friendId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
+        //требуется делать отдельный метод для получения списка пользователей по айди что бы уменьшить обращения к базе?
+        return fillingFilms(filmRepository.getCommonFilms(userId, friendId));
     }
 
     private List<Film> fillingFilms(List<Film> films) {
