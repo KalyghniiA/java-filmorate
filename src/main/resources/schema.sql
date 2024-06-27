@@ -82,3 +82,28 @@ create table IF NOT EXISTS LIKES
     constraint FK_LIKES_USER_ID
         foreign key (USER_ID) references USERS ON DELETE CASCADE
 );
+
+create table if not exists REVIEWS
+(
+    REVIEW_ID   INTEGER auto_increment
+        primary key,
+    CONTENT     CHARACTER VARYING(1024) not null,
+    IS_POSITIVE BOOLEAN                 not null,
+    USER_ID     INTEGER                 not null,
+    FILM_ID     INTEGER                 not null,
+    constraint "REVIEWS_FILMS_FILM_ID_fk"
+        foreign key (FILM_ID) references FILMS
+            on update cascade on delete cascade,
+    constraint "REVIEWS_USERS_USER_ID_fk"
+        foreign key (USER_ID) references USERS
+            on update cascade on delete cascade
+);
+
+CREATE TABLE IF NOT EXISTS REVIEWS_LIKES
+(
+    REVIEW_ID INTEGER NOT NULL,
+    USER_ID INTEGER NOT NULL,
+    IS_LIKE BOOLEAN NOT NULL,
+    constraint "REVIEWS_LIKES_pk"
+        primary key (REVIEW_ID, USER_ID, IS_LIKE)
+);
