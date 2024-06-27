@@ -18,10 +18,10 @@ public class JdbcEventRepository implements EventRepository {
     @Override
     public void addEvent(Event event) {
         Map<String, Object> params = Map.of("userId", event.getUserId(),
-                "eventType", event.getEventType().getId(),
-                "operation", event.getOperation().getId(),
+                "eventType", event.getEventType(),
+                "operation", event.getOperation(),
                 "entityId", event.getEntityId(),
-                "timestamp", Timestamp.valueOf(event.getTimestamp()));
+                "timestamp", event.getTimestamp());
 
         String sql = """
                 INSERT INTO USERS_EVENTS (USER_ID, EVENT_TYPE, OPERATION, ENTITY_ID, TIMESTAMP)
@@ -36,17 +36,16 @@ public class JdbcEventRepository implements EventRepository {
         String sql = """
                 SELECT USERS_EVENTS.EVENT_ID AS ID,
                        USERS_EVENTS.USER_ID,
-                       USERS_EVENTS.EVENT_TYPE AS EVENT_TYPE_ID,
+                       USERS_EVENTS.EVENT_TYPE,
                        EVENT_TYPE.NAME AS EVENT_TYPE_NAME,
-                       USERS_EVENTS.OPERATION AS OPERATION_ID,
+                       USERS_EVENTS.OPERATION,
                        OPERATION.NAME AS OPERATION_NAME,
                        ENTITY_ID,
                        TIMESTAMP
                 FROM USERS_EVENTS
-                JOIN EVENT_TYPE ON USERS_EVENTS.EVENT_TYPE = EVENT_TYPE.EVENT_TYPE_ID
-                JOIN OPERATION ON USERS_EVENTS.OPERATION = OPERATION.OPERATION_ID
+                JOIN EVENT_TYPE ON USERS_EVENTS.EVENT_TYPE = EVENT_TYPE.NAME
+                JOIN OPERATION ON USERS_EVENTS.OPERATION = OPERATION.NAME
                 WHERE USER_ID = :userId
-                GROUP BY ID;
                 """;
 
         Map<String, Object> param = Map.of("userId", userId);

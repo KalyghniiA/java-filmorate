@@ -39,8 +39,8 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", review.getFilmId())));
         userRepository.getById(review.getUserId())
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", review.getUserId())));
-        eventService.addEvent(new Event(review.getUserId(), new EventType(2, "REVIEW"),new Operation(2, "ADD"),
-                review.getFilmId(), LocalDateTime.now()));
+        eventService.addEvent(new Event(review.getUserId(), new EventType("REVIEW"),new Operation("ADD"),
+                review.getFilmId(), System.currentTimeMillis()));
         return reviewRepository.save(review);
     }
 
@@ -53,16 +53,16 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.getById(review.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", review.getId())));
         review.setUseful(usefulRepository.getUsefulToReview(review.getId()));
-        eventService.addEvent(new Event(review.getUserId(), new EventType(2, "REVIEW"),new Operation(3, "UPDATE"),
-                review.getFilmId(), LocalDateTime.now()));
+        eventService.addEvent(new Event(review.getUserId(), new EventType("REVIEW"),new Operation("UPDATE"),
+                review.getFilmId(), System.currentTimeMillis()));
         return review;
     }
 
     @Override
     public void deleteReview(int reviewId) {
         reviewRepository.delete(reviewId);
-        eventService.addEvent(new Event(reviewId, new EventType(2, "REVIEW"),new Operation(1, "REMOVE"),
-                reviewId, LocalDateTime.now()));
+        eventService.addEvent(new Event(reviewId, new EventType("REVIEW"),new Operation("REMOVE"),
+                reviewId, System.currentTimeMillis()));
     }
 
     @Override

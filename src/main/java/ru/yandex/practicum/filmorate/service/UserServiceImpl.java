@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,8 +72,8 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
 
         userStorage.addFriend(id, friendId);
-        eventService.addEvent(new Event(id, new EventType(3,"FRIEND"),new Operation(2, "ADD"),
-                friendId, LocalDateTime.now()));
+        eventService.addEvent(new Event(id, new EventType("FRIEND"), new Operation("ADD"),
+                friendId, System.currentTimeMillis()));
         return userStorage.getById(id).orElseThrow();
     }
 
@@ -83,8 +82,8 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(id).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", id)));
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
         userStorage.deleteFriend(id, friendId);
-        eventService.addEvent(new Event(id, new EventType(3,"FRIEND"),new Operation(1, "REMOVE"),
-                friendId, LocalDateTime.now()));
+        eventService.addEvent(new Event(id, new EventType("FRIEND"), new Operation("REMOVE"),
+                friendId, System.currentTimeMillis()));
     }
 
     @Override

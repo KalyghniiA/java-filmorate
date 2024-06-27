@@ -7,6 +7,5 @@ import lombok.Data;
 @Data
 @AllArgsConstructor(onConstructor = @__(@JsonCreator))
 public class Operation {
-    private final int id;
     private String name;
 }

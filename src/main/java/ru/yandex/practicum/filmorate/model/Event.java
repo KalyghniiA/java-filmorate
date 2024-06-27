@@ -4,7 +4,6 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
 @Data
 public class Event {
@@ -23,5 +22,5 @@ public class Event {
     private final Integer entityId; // идентификатор сущности, с которой произошло событие
 
     @NotNull
-    private final LocalDateTime timestamp;
+    private final Long timestamp;
 }
