@@ -149,4 +149,14 @@ public class FilmController {
         log.info("Отправлены общие фильмы");
         return films;
     }
+
+    @GetMapping(value = "/films/search")
+    public Collection<Film> getSearchedFilms(
+            @RequestParam(required = true) String query,
+            @RequestParam(required = true, defaultValue = "title") String by) {
+        log.info("Получен GET запрос на поиск фильмов");
+        Collection<Film> films = filmService.getSearched(query, by);
+        log.info(String.format("Отправлен результат поиска фильмов с запросом %s", query));
+        return films;
+    }
 }

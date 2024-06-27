@@ -16,7 +16,7 @@ public class FilmsExtractor implements ResultSetExtractor<List<Film>> {
         List<Film> films = new ArrayList<>();
         while (rs.next()) {
             Film film = new Film(
-                    rs.getString("FILM_NAME"),
+                    rs.getString("NAME"),
                     rs.getString("DESCRIPTION"),
                     rs.getDate("RELEASE_DATE").toLocalDate(),
                     rs.getInt("DURATION")
