@@ -13,10 +13,10 @@ public class Event {
     private final Integer userId; // юзер, который совершил действие
 
     @NotBlank
-    private final EventType eventType; // одно из значениий LIKE, REVIEW или FRIEND - тип события
+    private final String eventType; // одно из значениий LIKE, REVIEW или FRIEND - тип события
 
     @NotBlank
-    private final Operation operation; // одно из значениий REMOVE, ADD, UPDATE - тип операции
+    private final String operation; // одно из значениий REMOVE, ADD, UPDATE - тип операции
 
     @NotNull
     private final Integer entityId; // идентификатор сущности, с которой произошло событие

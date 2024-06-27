@@ -34,17 +34,13 @@ public class JdbcEventRepository implements EventRepository {
     @Override
     public List<Event> getUserEvents(Integer userId) {
         String sql = """
-                SELECT USERS_EVENTS.EVENT_ID AS ID,
+                SELECT USERS_EVENTS.EVENT_ID,
                        USERS_EVENTS.USER_ID,
                        USERS_EVENTS.EVENT_TYPE,
-                       EVENT_TYPE.NAME AS EVENT_TYPE_NAME,
                        USERS_EVENTS.OPERATION,
-                       OPERATION.NAME AS OPERATION_NAME,
-                       ENTITY_ID,
-                       TIMESTAMP
+                       USERS_EVENTS.ENTITY_ID,
+                       USERS_EVENTS.TIMESTAMP
                 FROM USERS_EVENTS
-                JOIN EVENT_TYPE ON USERS_EVENTS.EVENT_TYPE = EVENT_TYPE.NAME
-                JOIN OPERATION ON USERS_EVENTS.OPERATION = OPERATION.NAME
                 WHERE USER_ID = :userId
                 """;
 

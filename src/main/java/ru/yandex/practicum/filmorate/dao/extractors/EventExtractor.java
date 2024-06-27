@@ -17,15 +17,12 @@ public class EventExtractor implements ResultSetExtractor<List<Event>> {
     @Override
     public List<Event> extractData(ResultSet rs) throws SQLException, DataAccessException {
         List<Event> events = new ArrayList<>();
-        Long timestamp = System.currentTimeMillis();
         while (rs.next()) {
-            Operation operation = new Operation(rs.getString("OPERATION_NAME"));
-            EventType eventType = new EventType(rs.getString("EVENT_TYPE_NAME"));
             Event event = new Event(
                     rs.getInt("USER_ID"),
-                    eventType,
-                    operation,
-                    rs.getInt("EVENT_TYPE"),
+                    rs.getString("EVENT_TYPE"),
+                    rs.getString("OPERATION"),
+                    rs.getInt("ENTITY_ID"),
                     rs.getLong("TIMESTAMP")
             );
             event.setEventId(rs.getInt("EVENT_ID"));

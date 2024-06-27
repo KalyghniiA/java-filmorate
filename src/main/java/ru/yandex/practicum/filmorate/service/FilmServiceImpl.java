@@ -129,14 +129,14 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public void addLike(int filmId, int userId) {
         likeRepository.addLike(filmId, userId);
-        eventService.addEvent(new Event(userId, new EventType("LIKE"),new Operation("ADD"),
+        eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.ADD.name(),
                 filmId, System.currentTimeMillis()));
     }
 
     @Override
     public void removeLike(int filmId, int userId) {
         likeRepository.removeLike(filmId, userId);
-        eventService.addEvent(new Event(userId, new EventType("LIKE"),new Operation("REMOVE"),
+        eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.REMOVE.name(),
                 filmId, System.currentTimeMillis()));
     }
 

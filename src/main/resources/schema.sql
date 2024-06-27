@@ -108,15 +108,6 @@ CREATE TABLE IF NOT EXISTS REVIEWS_LIKES
         primary key (REVIEW_ID, USER_ID, IS_LIKE)
 );
 
-create table if not exists EVENT_TYPE
-(
-    NAME   CHARACTER VARYING(255) not null primary key
-);
-
-create table if not exists OPERATION
-(
-    NAME CHARACTER VARYING(255) not null primary key
-);
 
 create table if not exists USERS_EVENTS
 (
@@ -128,9 +119,5 @@ create table if not exists USERS_EVENTS
     ENTITY_ID     INTEGER   not null,
     TIMESTAMP     BIGINT not null,
     constraint "USERS_EVENTS_USER_ID_fk"
-        foreign key (USER_ID) references USERS ON DELETE CASCADE,
-    constraint "USERS_EVENTS_EVENT_TYPE_ID_fk"
-        foreign key (EVENT_TYPE) references EVENT_TYPE ON DELETE CASCADE,
-    constraint "USERS_EVENTS_OPERATION_ID_fk"
-        foreign key (OPERATION) references OPERATION ON DELETE CASCADE
+        foreign key (USER_ID) references USERS ON DELETE CASCADE
 );

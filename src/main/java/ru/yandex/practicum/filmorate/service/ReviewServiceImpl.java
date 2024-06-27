@@ -39,9 +39,11 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", review.getFilmId())));
         userRepository.getById(review.getUserId())
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", review.getUserId())));
-        eventService.addEvent(new Event(review.getUserId(), new EventType("REVIEW"),new Operation("ADD"),
-                review.getFilmId(), System.currentTimeMillis()));
-        return reviewRepository.save(review);
+
+        Review review1 = reviewRepository.save(review);
+        eventService.addEvent(new Event(review1.getUserId(), EventType.REVIEW.name(), Operation.ADD.name(),
+                review1.getId(), System.currentTimeMillis()));
+        return review1;
     }
 
     @Override
@@ -53,15 +55,19 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.getById(review.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", review.getId())));
         review.setUseful(usefulRepository.getUsefulToReview(review.getId()));
-        eventService.addEvent(new Event(review.getUserId(), new EventType("REVIEW"),new Operation("UPDATE"),
-                review.getFilmId(), System.currentTimeMillis()));
+        eventService.addEvent(new Event(review.getUserId(), EventType.REVIEW.name(), Operation.UPDATE.name(),
+                review.getId(), System.currentTimeMillis()));
         return review;
     }
 
     @Override
     public void deleteReview(int reviewId) {
+        Review review = reviewRepository.getById(reviewId).orElseThrow(() ->
+                new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
+
         reviewRepository.delete(reviewId);
-        eventService.addEvent(new Event(reviewId, new EventType("REVIEW"),new Operation("REMOVE"),
+
+        eventService.addEvent(new Event(review.getUserId(), EventType.REVIEW.name(), Operation.REMOVE.name(),
                 reviewId, System.currentTimeMillis()));
     }
 
