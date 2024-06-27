@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import ru.yandex.practicum.filmorate.model.Film;
+
 import java.util.List;
 
 
@@ -20,6 +21,8 @@ public interface FilmService {
     void removeLike(int filmId, int userId);
 
     List<Film> getPopular(Integer count, Integer genreId, Integer year);
+
+    List<Film> getSearched(String query, String by);
 
     List<Film> getFilmsToDirector(int directorId, String sortBy);
 

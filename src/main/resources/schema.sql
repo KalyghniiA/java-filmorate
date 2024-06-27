@@ -31,9 +31,9 @@ create table if not exists FILMS
     DESCRIPTION  CHARACTER VARYING(1024) not null,
     RELEASE_DATE DATE                    not null,
     DURATION     INTEGER                 not null,
-    RATING       INTEGER,
+    RATING_ID       INTEGER,
     constraint "FILMS_RATING_RATING_ID_fk"
-        foreign key (RATING) references RATINGS
+        foreign key (RATING_ID) references RATINGS
 );
 
 create table if not exists FILM_DIRECTORS
