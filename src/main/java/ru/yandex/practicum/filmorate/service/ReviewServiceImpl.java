@@ -7,8 +7,12 @@ import ru.yandex.practicum.filmorate.dao.ReviewRepository;
 import ru.yandex.practicum.filmorate.dao.ReviewUsefulRepository;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -18,13 +22,15 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewUsefulRepository usefulRepository;
     private final UserRepository userRepository;
     private final FilmRepository filmRepository;
+    private final EventService eventService;
 
     @Autowired
-    public ReviewServiceImpl(ReviewRepository reviewRepository, ReviewUsefulRepository usefulRepository, UserRepository userRepository, FilmRepository filmRepository) {
+    public ReviewServiceImpl(ReviewRepository reviewRepository, ReviewUsefulRepository usefulRepository, UserRepository userRepository, FilmRepository filmRepository, EventService eventService) {
         this.reviewRepository = reviewRepository;
         this.usefulRepository = usefulRepository;
         this.userRepository = userRepository;
         this.filmRepository = filmRepository;
+        this.eventService = eventService;
     }
 
     @Override
@@ -33,7 +39,8 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", review.getFilmId())));
         userRepository.getById(review.getUserId())
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", review.getUserId())));
-
+        eventService.addEvent(new Event(review.getUserId(), new EventType(2, "REVIEW"),new Operation(2, "ADD"),
+                review.getFilmId(), LocalDateTime.now()));
         return reviewRepository.save(review);
     }
 
@@ -46,12 +53,16 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.getById(review.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", review.getId())));
         review.setUseful(usefulRepository.getUsefulToReview(review.getId()));
+        eventService.addEvent(new Event(review.getUserId(), new EventType(2, "REVIEW"),new Operation(3, "UPDATE"),
+                review.getFilmId(), LocalDateTime.now()));
         return review;
     }
 
     @Override
     public void deleteReview(int reviewId) {
         reviewRepository.delete(reviewId);
+        eventService.addEvent(new Event(reviewId, new EventType(2, "REVIEW"),new Operation(1, "REMOVE"),
+                reviewId, LocalDateTime.now()));
     }
 
     @Override

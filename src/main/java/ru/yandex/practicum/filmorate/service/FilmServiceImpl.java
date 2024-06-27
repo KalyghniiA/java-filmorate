@@ -5,11 +5,10 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.Map;
@@ -24,6 +23,7 @@ public class FilmServiceImpl implements FilmService {
     private final LikeRepository likeRepository;
     private final DirectorRepository directorRepository;
     private final UserRepository userRepository;
+    private final EventService eventService;
 
 
     @Autowired
@@ -32,13 +32,14 @@ public class FilmServiceImpl implements FilmService {
                            MpaRepository mpaRepository,
                            LikeRepository likeRepository,
                            DirectorRepository directorRepository,
-                           UserRepository userRepository) {
+                           UserRepository userRepository, EventService eventService) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.likeRepository = likeRepository;
         this.directorRepository = directorRepository;
         this.userRepository = userRepository;
+        this.eventService = eventService;
     }
 
     @Override
@@ -128,11 +129,15 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public void addLike(int filmId, int userId) {
         likeRepository.addLike(filmId, userId);
+        eventService.addEvent(new Event(userId, new EventType(1, "LIKE"),new Operation(2, "ADD"),
+                filmId, LocalDateTime.now()));
     }
 
     @Override
     public void removeLike(int filmId, int userId) {
         likeRepository.removeLike(filmId, userId);
+        eventService.addEvent(new Event(userId, new EventType(1, "LIKE"),new Operation(1, "REMOVE"),
+                filmId, LocalDateTime.now()));
     }
 
     @Override

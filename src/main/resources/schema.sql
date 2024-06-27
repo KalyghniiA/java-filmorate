@@ -107,3 +107,34 @@ CREATE TABLE IF NOT EXISTS REVIEWS_LIKES
     constraint "REVIEWS_LIKES_pk"
         primary key (REVIEW_ID, USER_ID, IS_LIKE)
 );
+
+create table if not exists EVENT_TYPE
+(
+    EVENT_TYPE_ID INTEGER not null
+        primary key,
+    NAME   CHARACTER VARYING(255) not null
+);
+
+create table if not exists OPERATION
+(
+    OPERATION_ID INTEGER not null
+        primary key,
+    NAME CHARACTER VARYING(255) not null
+);
+
+create table if not exists USERS_EVENTS
+(
+    EVENT_ID      INTEGER auto_increment
+        primary key,
+    USER_ID       INTEGER   not null,
+    EVENT_TYPE INTEGER   not null,
+    OPERATION  INTEGER   not null,
+    ENTITY_ID     INTEGER   not null,
+    TIMESTAMP     TIMESTAMP not null,
+    constraint "USERS_EVENTS_USER_ID_fk"
+        foreign key (USER_ID) references USERS ON DELETE CASCADE,
+    constraint "USERS_EVENTS_EVENT_TYPE_ID_fk"
+        foreign key (EVENT_TYPE) references EVENT_TYPE ON DELETE CASCADE,
+    constraint "USERS_EVENTS_OPERATION_ID_fk"
+        foreign key (OPERATION) references OPERATION ON DELETE CASCADE
+);
