@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmExtractor;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmsExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.LikedFilmsForUserIdExtractor;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -375,6 +376,17 @@ public class JdbcFilmRepository implements FilmRepository {
         Map<String, Object> param = Map.of("user_id", userId, "friend_id", friendId);
 
         return getFilms(sql, param);
+    }
+
+    @Override
+    public List<Integer> getLikedFilmsByUserId(int userId) {
+        String sql = """
+                SELECT  LIKES.FILM_ID
+                FROM LIKES
+                WHERE USER_ID = :user_id
+                """;
+        Map<String, Object> param = Map.of("user_id", userId);
+        return jdbc.query(sql, param, new LikedFilmsForUserIdExtractor());
     }
 
     private List<Film> getFilms(String sql, Map<String, Object> param) {
