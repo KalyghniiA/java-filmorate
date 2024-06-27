@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +73,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Review getReview(Integer reviewId) {
         Review review = reviewRepository.getById(reviewId)
-                .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе",reviewId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
 
         review.setUseful(usefulRepository.getUsefulToReview(reviewId));
         return review;
@@ -103,7 +102,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
 
         if (isLike) {
-                usefulRepository.addLikeToReview(reviewId, userId);
+            usefulRepository.addLikeToReview(reviewId, userId);
         } else {
             usefulRepository.addDislikeToReview(reviewId, userId);
         }
@@ -125,7 +124,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private List<Review> fillingReviews(List<Review> reviews) {
         Map<Integer, Integer> usefulness = usefulRepository.getUsefulToReviews(reviews.stream().map(Review::getId).toList());
-        for (Review review: reviews) {
+        for (Review review : reviews) {
             Integer useful = usefulness.get(review.getId());
             if (useful != null) {
                 review.setUseful(useful);

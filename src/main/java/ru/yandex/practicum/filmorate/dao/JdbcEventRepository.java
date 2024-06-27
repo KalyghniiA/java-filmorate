@@ -6,7 +6,6 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.extractors.EventExtractor;
 import ru.yandex.practicum.filmorate.model.Event;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 

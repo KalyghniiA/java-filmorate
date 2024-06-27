@@ -7,13 +7,10 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
 
-
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @Service
 public class FilmServiceImpl implements FilmService {
@@ -158,9 +155,12 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getFilmsToDirector(int directorId, String sortBy) {
         switch (sortBy.toLowerCase().trim()) {
-            case "year": return fillingFilms(filmRepository.getFilmsToDirectorSortByYear(directorId));
-            case "likes": return fillingFilms(filmRepository.getFilmsToDirectorSortByLikes(directorId));
-            default: throw new ValidationException("Переданный параметр сортировки не поддерживается");
+            case "year":
+                return fillingFilms(filmRepository.getFilmsToDirectorSortByYear(directorId));
+            case "likes":
+                return fillingFilms(filmRepository.getFilmsToDirectorSortByLikes(directorId));
+            default:
+                throw new ValidationException("Переданный параметр сортировки не поддерживается");
         }
     }
 
