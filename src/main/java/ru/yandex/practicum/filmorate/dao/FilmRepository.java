@@ -35,4 +35,5 @@ public interface FilmRepository {
     List<Film> getSearchedFiltrByDirector(String query);
 
     List<Film> getSearchedFiltrByTitleAndDirector(String query);
+    //
 }
