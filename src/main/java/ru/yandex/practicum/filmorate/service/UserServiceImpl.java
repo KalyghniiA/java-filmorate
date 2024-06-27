@@ -6,8 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,11 +18,13 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     private final UserRepository userStorage;
     private final FilmRepository filmRepository;
+    private final EventService eventService;
 
     @Autowired
-    public UserServiceImpl(UserRepository userStorage, FilmRepository filmRepository) {
+    public UserServiceImpl(UserRepository userStorage, FilmRepository filmRepository, EventService eventService) {
         this.userStorage = userStorage;
         this.filmRepository = filmRepository;
+        this.eventService = eventService;
     }
 
     @Override
@@ -71,6 +72,8 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
 
         userStorage.addFriend(id, friendId);
+        eventService.addEvent(new Event(id, EventType.FRIEND.name(), Operation.ADD.name(),
+                friendId, System.currentTimeMillis()));
         return userStorage.getById(id).orElseThrow();
     }
 
@@ -79,6 +82,8 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(id).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", id)));
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
         userStorage.deleteFriend(id, friendId);
+        eventService.addEvent(new Event(id, EventType.FRIEND.name(), Operation.REMOVE.name(),
+                friendId, System.currentTimeMillis()));
     }
 
     @Override
@@ -129,5 +134,10 @@ public class UserServiceImpl implements UserService {
         }
         log.info(String.format("Список рекомендаций для пользователя с id %s отправлен", userId));
         return recommendations;
+    }
+
+    @Override
+    public List<Event> getEventsByUser(Integer userId) {
+        return eventService.getUserEvents(userId);
     }
 }

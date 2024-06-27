@@ -7,6 +7,9 @@ import ru.yandex.practicum.filmorate.dao.ReviewRepository;
 import ru.yandex.practicum.filmorate.dao.ReviewUsefulRepository;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
@@ -18,13 +21,15 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewUsefulRepository usefulRepository;
     private final UserRepository userRepository;
     private final FilmRepository filmRepository;
+    private final EventService eventService;
 
     @Autowired
-    public ReviewServiceImpl(ReviewRepository reviewRepository, ReviewUsefulRepository usefulRepository, UserRepository userRepository, FilmRepository filmRepository) {
+    public ReviewServiceImpl(ReviewRepository reviewRepository, ReviewUsefulRepository usefulRepository, UserRepository userRepository, FilmRepository filmRepository, EventService eventService) {
         this.reviewRepository = reviewRepository;
         this.usefulRepository = usefulRepository;
         this.userRepository = userRepository;
         this.filmRepository = filmRepository;
+        this.eventService = eventService;
     }
 
     @Override
@@ -34,7 +39,10 @@ public class ReviewServiceImpl implements ReviewService {
         userRepository.getById(review.getUserId())
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", review.getUserId())));
 
-        return reviewRepository.save(review);
+        Review review1 = reviewRepository.save(review);
+        eventService.addEvent(new Event(review1.getUserId(), EventType.REVIEW.name(), Operation.ADD.name(),
+                review1.getId(), System.currentTimeMillis()));
+        return review1;
     }
 
     @Override
@@ -46,18 +54,26 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.getById(review.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", review.getId())));
         review.setUseful(usefulRepository.getUsefulToReview(review.getId()));
+        eventService.addEvent(new Event(review.getUserId(), EventType.REVIEW.name(), Operation.UPDATE.name(),
+                review.getId(), System.currentTimeMillis()));
         return review;
     }
 
     @Override
     public void deleteReview(int reviewId) {
+        Review review = reviewRepository.getById(reviewId).orElseThrow(() ->
+                new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
+
         reviewRepository.delete(reviewId);
+
+        eventService.addEvent(new Event(review.getUserId(), EventType.REVIEW.name(), Operation.REMOVE.name(),
+                reviewId, System.currentTimeMillis()));
     }
 
     @Override
     public Review getReview(Integer reviewId) {
         Review review = reviewRepository.getById(reviewId)
-                .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе",reviewId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
 
         review.setUseful(usefulRepository.getUsefulToReview(reviewId));
         return review;
@@ -86,7 +102,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
 
         if (isLike) {
-                usefulRepository.addLikeToReview(reviewId, userId);
+            usefulRepository.addLikeToReview(reviewId, userId);
         } else {
             usefulRepository.addDislikeToReview(reviewId, userId);
         }
@@ -108,7 +124,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private List<Review> fillingReviews(List<Review> reviews) {
         Map<Integer, Integer> usefulness = usefulRepository.getUsefulToReviews(reviews.stream().map(Review::getId).toList());
-        for (Review review: reviews) {
+        for (Review review : reviews) {
             Integer useful = usefulness.get(review.getId());
             if (useful != null) {
                 review.setUseful(useful);

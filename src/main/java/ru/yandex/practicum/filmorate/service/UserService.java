@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -26,4 +27,6 @@ public interface UserService {
     List<User> getMutualFriends(int id, int otherId);
 
     List<Optional<Film>> getRecommendations(int userId);
+
+    List<Event> getEventsByUser(Integer userId);
 }
