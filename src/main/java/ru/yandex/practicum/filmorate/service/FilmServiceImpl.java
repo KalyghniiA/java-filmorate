@@ -139,7 +139,7 @@ public class FilmServiceImpl implements FilmService {
         return switch (by.toLowerCase().trim()) {
             case "title" -> fillingFilms(filmRepository.getSearchedFiltrByTitle(query));
             case "director" -> fillingFilms(filmRepository.getSearchedFiltrByDirector(query));
-            case "title,director", "director,title," ->
+            case "title,director", "director,title" ->
                 //TODO придумать нормальное разделение, что если параметра будет не 2, а много(в параметре нужен массив)
                     fillingFilms(filmRepository.getSearchedFiltrByTitleAndDirector(query));
             default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
@@ -186,8 +186,12 @@ public class FilmServiceImpl implements FilmService {
         Map<Integer, Set<Director>> directorsForFilms = directorRepository.getDirectorsByFilms(filmsId);
         return films.stream()
                 .peek(film -> {
-                    film.setGenres(genresForFilms.get(film.getId()));
-                    film.setDirectors(directorsForFilms.get(film.getId()));
+                    if (genresForFilms.containsKey(film.getId())) {
+                        film.setGenres(genresForFilms.get(film.getId()));
+                    }
+                    if (directorsForFilms.containsKey(film.getId())) {
+                        film.setDirectors(directorsForFilms.get(film.getId()));
+                    }
                 })
                 .collect(Collectors.toList());
     }

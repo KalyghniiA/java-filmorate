@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.service.MpaService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import java.util.Collection;
 import java.util.List;
 
@@ -152,8 +153,8 @@ public class FilmController {
 
     @GetMapping(value = "/films/search")
     public Collection<Film> getSearchedFilms(
-            @RequestParam(required = true) String query,
-            @RequestParam(required = true, defaultValue = "title") String by) {
+            @RequestParam @NotBlank String query,
+            @RequestParam(required = false, defaultValue = "title") String by) {
         log.info("Получен GET запрос на поиск фильмов");
         Collection<Film> films = filmService.getSearched(query, by);
         log.info(String.format("Отправлен результат поиска фильмов с запросом %s", query));

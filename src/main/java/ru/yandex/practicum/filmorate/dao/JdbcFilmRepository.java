@@ -266,31 +266,9 @@ public class JdbcFilmRepository implements FilmRepository {
         return getFilms(sql, param);
     }
 
-//    @Override
-//    public List<Film> getPopularFilmsWithDirectors() {
-//        String sql = """
-//                SELECT
-//                    FILMS.FILM_ID,
-//                    FILMS.NAME,
-//                    DESCRIPTION,
-//                    RELEASE_DATE,
-//                    DURATION,
-//                    FILMS.RATING_ID,
-//                    RATINGS.NAME AS RATING_NAME
-//                FROM FILMS
-//                         JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-//                         LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
-//                         LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
-//                         LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-//                GROUP BY FILMS.FILM_ID
-//                ORDER BY count(LIKES.FILM_ID) DESC;
-//                """;
-//
-//        return getFilms(sql, Map.of());
-//    }
-
     @Override
     public List<Film> getSearchedFiltrByTitleAndDirector(String query) {
+        String concatParam = "%" + query + "%";
         String sql = """
                 SELECT
                     FILMS.FILM_ID,
@@ -305,18 +283,19 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
                          LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE LOWER(FILMS.NAME) LIKE LOWER('%" + query + "%') OR LOWER(DIRECTORS.NAME) LIKE LOWER('%" + query + "%')
+                WHERE FILMS.NAME LIKE :query OR DIRECTORS.NAME LIKE :query
                 GROUP BY FILMS.FILM_ID
                 ORDER BY count(LIKES.FILM_ID) DESC;
                 """;
 
-        Map<String, Object> param = Map.of("query", query);
+        Map<String, Object> param = Map.of("query", concatParam);
 
         return getFilms(sql, param);
     }
 
     @Override
     public List<Film> getSearchedFiltrByTitle(String query) {
+        String concatParam = "%" + query + "%";
         String sql = """
                 SELECT
                     FILMS.FILM_ID,
@@ -331,18 +310,19 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
                          LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE LOWER(FILMS.NAME) LIKE LOWER('%" + query + "%')
+                WHERE FILMS.NAME LIKE :query
                 GROUP BY FILMS.FILM_ID
                 ORDER BY count(LIKES.FILM_ID) DESC;
                 """;
 
-        Map<String, Object> param = Map.of("query", query);
+        Map<String, Object> param = Map.of("query", concatParam);
 
         return getFilms(sql, param);
     }
 
     @Override
     public List<Film> getSearchedFiltrByDirector(String query) {
+        String concatParam = "%" + query + "%";
         String sql = """
                 SELECT
                     FILMS.FILM_ID,
@@ -357,12 +337,12 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
                          LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE LOWER(DIRECTORS.NAME) LIKE LOWER('%" + query + "%')
+                WHERE DIRECTORS.NAME LIKE :query
                 GROUP BY FILMS.FILM_ID
                 ORDER BY count(LIKES.FILM_ID) DESC;
                 """;
 
-        Map<String, Object> param = Map.of("query", query);
+        Map<String, Object> param = Map.of("query", concatParam);
 
         return getFilms(sql, param);
     }
