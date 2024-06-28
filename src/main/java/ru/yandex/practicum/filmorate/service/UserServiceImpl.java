@@ -3,9 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.DirectorRepository;
-import ru.yandex.practicum.filmorate.dao.FilmRepository;
-import ru.yandex.practicum.filmorate.dao.GenreRepository;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
@@ -16,19 +13,14 @@ import java.util.List;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userStorage;
-    private final FilmRepository filmRepository;
     private final EventService eventService;
-    private final GenreRepository genreRepository;
-    private final DirectorRepository directorRepository;
+
 
 
     @Autowired
-    public UserServiceImpl(UserRepository userStorage, FilmRepository filmRepository, EventService eventService, GenreRepository genreRepository, DirectorRepository directorRepository) {
+    public UserServiceImpl(UserRepository userStorage,  EventService eventService) {
         this.userStorage = userStorage;
-        this.filmRepository = filmRepository;
         this.eventService = eventService;
-        this.genreRepository = genreRepository;
-        this.directorRepository = directorRepository;
     }
 
     @Override
