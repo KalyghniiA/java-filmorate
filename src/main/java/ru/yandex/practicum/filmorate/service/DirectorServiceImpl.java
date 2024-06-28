@@ -20,12 +20,7 @@ public class DirectorServiceImpl implements DirectorService {
 
     @Override
     public List<Director> getDirectors() {
-        List<Director> directors = directorRepository.getDirectors();
-        if (directors.isEmpty()) {
-            throw new NotFoundException("Список режиссеров пуст");
-        }
-
-        return directors;
+        return directorRepository.getDirectors();
     }
 
     @Override

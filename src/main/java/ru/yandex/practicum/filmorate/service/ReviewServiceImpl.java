@@ -53,10 +53,12 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", review.getUserId())));
         reviewRepository.getById(review.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", review.getId())));
-        review.setUseful(usefulRepository.getUsefulToReview(review.getId()));
-        eventService.addEvent(new Event(review.getUserId(), EventType.REVIEW.name(), Operation.UPDATE.name(),
-                review.getId(), System.currentTimeMillis()));
-        return review;
+        reviewRepository.update(review);
+        //review.setUseful(usefulRepository.getUsefulToReview(review.getId()));
+        Review updateReview = reviewRepository.getById(review.getId()).orElseThrow();
+        eventService.addEvent(new Event(updateReview.getUserId(), EventType.REVIEW.name(), Operation.UPDATE.name(),
+                updateReview.getId(), System.currentTimeMillis()));
+        return updateReview;
     }
 
     @Override

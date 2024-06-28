@@ -8,9 +8,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
 
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,6 +75,7 @@ public class FilmServiceImpl implements FilmService {
                         () -> new NotFoundException(String.format("Фильма с id %s нет в базе", id))
                 );
         film.setGenres(genreRepository.getGenresByFilm(film.getId()));
+        film.setDirectors(directorRepository.getDirectorsByFilm(id));
         return film;
     }
 
@@ -104,7 +103,7 @@ public class FilmServiceImpl implements FilmService {
         }
 
         if (!film.getGenres().isEmpty()) {
-            Set<Genre> genres = Set.copyOf(genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList()));
+            Set<Genre> genres = genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList());
             if (genres.size() != film.getGenres().size()) {
                 throw new ValidationException("Одного из жанров нет в базе");
             }
@@ -126,6 +125,10 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public void addLike(int filmId, int userId) {
+        filmRepository.getById(filmId)
+                .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
+        userRepository.getById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
         likeRepository.addLike(filmId, userId);
         eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.ADD.name(),
                 filmId, System.currentTimeMillis()));
@@ -133,6 +136,10 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public void removeLike(int filmId, int userId) {
+        filmRepository.getById(filmId)
+                        .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
+        userRepository.getById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
         likeRepository.removeLike(filmId, userId);
         eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.REMOVE.name(),
                 filmId, System.currentTimeMillis()));
@@ -167,11 +174,16 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getFilmsToDirector(int directorId, String sortBy) {
-        return switch (sortBy.toLowerCase().trim()) {
+        List<Film> films =  switch (sortBy.toLowerCase().trim()) {
             case "year" -> fillingFilms(filmRepository.getFilmsToDirectorSortByYear(directorId));
             case "likes" -> fillingFilms(filmRepository.getFilmsToDirectorSortByLikes(directorId));
             default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
         };
+
+        if (films.isEmpty()) {
+            throw new NotFoundException("по данным параметрам фильмов нет");
+        }
+        return films;
     }
 
     @Override
@@ -182,6 +194,38 @@ public class FilmServiceImpl implements FilmService {
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
         //требуется делать отдельный метод для получения списка пользователей по айди что бы уменьшить обращения к базе?
         return fillingFilms(filmRepository.getCommonFilms(userId, friendId));
+    }
+
+
+    @Override
+    public List<Film> getRecommendations(int userId) {
+        List<Integer> userFilms = filmRepository.getLikedFilmsByUserId(userId);
+        List<User> users = userRepository.getAll();
+        HashMap<Integer, List<Integer>> likes = new HashMap<>();
+        for (User user : users) {
+            if (user.getId() != userId) {
+                likes.put(user.getId(), filmRepository.getLikedFilmsByUserId(user.getId()));
+            }
+        }
+        int maxCommonElementsCount = 0;
+        List<Integer> films = new ArrayList<>();
+        for (Integer anotherUserId : likes.keySet()) {
+            List<Integer> likedFilms = likes.get(anotherUserId);
+            int commonSum = 0;
+            for (Integer filmId : userFilms) {
+                for (Integer anotherFilmId : likedFilms) {
+                    if (filmId == anotherFilmId) {
+                        commonSum++;
+                    }
+                }
+            }
+            if (commonSum > maxCommonElementsCount) {
+                maxCommonElementsCount = commonSum;
+                films = likedFilms;
+            }
+        }
+        films.removeAll(userFilms);
+        return fillingFilms(filmRepository.getFilmsById(films));
     }
 
     private List<Film> fillingFilms(List<Film> films) {

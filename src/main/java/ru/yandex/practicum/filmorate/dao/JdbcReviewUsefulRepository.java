@@ -33,15 +33,16 @@ public class JdbcReviewUsefulRepository implements ReviewUsefulRepository {
     @Override
     public Map<Integer, Integer> getUsefulToReviews(List<Integer> reviewsId) {
         String sql = """
-                SELECT REVIEW_ID,
-                       (SELECT COUNT(REVIEW_ID)
-                        FROM REVIEWS_LIKES
-                        WHERE IS_LIKE IS TRUE AND REVIEW_ID IN (:reviews_id)) -
-                       (SELECT COUNT(REVIEW_ID)
-                        FROM REVIEWS_LIKES
-                        WHERE IS_LIKE IS FALSE AND REVIEW_ID IN (:reviews_id)) AS USEFUL
-                FROM REVIEWS_LIKES
-                where REVIEW_ID IN (:reviews_id);
+                SELECT
+                    REVIEW_ID,
+                    SUM(CASE WHEN IS_LIKE IS TRUE THEN 1 ELSE 0 END) -
+                    SUM(CASE WHEN IS_LIKE IS FALSE THEN 1 ELSE 0 END) AS USEFUL
+                FROM
+                    REVIEWS_LIKES
+                WHERE
+                        REVIEW_ID IN (:reviews_id)
+                GROUP BY
+                    REVIEW_ID;
                 """;
         Map<String, Object> param = Map.of("reviews_id", reviewsId);
         return jdbc.query(sql, param, new UsefulnessExtractor());

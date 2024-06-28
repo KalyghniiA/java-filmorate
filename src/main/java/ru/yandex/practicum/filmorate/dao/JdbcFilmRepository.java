@@ -84,9 +84,10 @@ public class JdbcFilmRepository implements FilmRepository {
                 WHERE FILM_ID = :film_id;
                 """;
 
-        jdbc.update(sql, param);
+
         saveGenresForFilm(film.getId(), film.getGenres());
         saveDirectorsForFilm(film.getId(), film.getDirectors());
+        jdbc.update(sql, param);
     }
 
     @Override
@@ -110,6 +111,26 @@ public class JdbcFilmRepository implements FilmRepository {
                 GROUP BY ID;
                 """;
         return getFilms(sql, Map.of());
+    }
+
+    @Override
+    public List<Film> getFilmsById(List<Integer> filmsId) {
+        String sql = """
+                SELECT FILMS.FILM_ID AS ID,
+                       FILMS.NAME AS FILM_NAME,
+                       DESCRIPTION,
+                       RELEASE_DATE,
+                       DURATION,
+                       FILMS.RATING_ID,
+                       RATINGS.NAME AS RATING_NAME
+                FROM FILMS
+                JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
+                WHERE FILMS.FILM_ID IN (:films_id)
+                GROUP BY ID;
+                """;
+
+        Map<String, Object> param = Map.of("films_id", filmsId);
+        return getFilms(sql, param);
     }
 
     @Override
@@ -269,7 +290,7 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getSearchedFiltrByTitleAndDirector(String query) {
-        String concatParam = "%" + query + "%";
+        String concatParam = "%" + query.toLowerCase() + "%";
         String sql = """
                 SELECT
                     FILMS.FILM_ID,
@@ -284,7 +305,7 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
                          LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE FILMS.NAME LIKE :query OR DIRECTORS.NAME LIKE :query
+                WHERE LOWER(FILMS.NAME) LIKE :query OR LOWER(DIRECTORS.NAME) LIKE :query
                 GROUP BY FILMS.FILM_ID
                 ORDER BY count(LIKES.FILM_ID) DESC;
                 """;
@@ -296,7 +317,7 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getSearchedFiltrByTitle(String query) {
-        String concatParam = "%" + query + "%";
+        String concatParam = "%" + query.toLowerCase() + "%";
         String sql = """
                 SELECT
                     FILMS.FILM_ID,
@@ -311,7 +332,7 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
                          LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE FILMS.NAME LIKE :query
+                WHERE LOWER(FILMS.NAME) LIKE :query
                 GROUP BY FILMS.FILM_ID
                 ORDER BY count(LIKES.FILM_ID) DESC;
                 """;
@@ -323,7 +344,7 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getSearchedFiltrByDirector(String query) {
-        String concatParam = "%" + query + "%";
+        String concatParam = "%" + query.toLowerCase() + "%";
         String sql = """
                 SELECT
                     FILMS.FILM_ID,
@@ -338,7 +359,7 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
                          LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE DIRECTORS.NAME LIKE :query
+                WHERE LOWER(DIRECTORS.NAME) LIKE :query
                 GROUP BY FILMS.FILM_ID
                 ORDER BY count(LIKES.FILM_ID) DESC;
                 """;
@@ -394,7 +415,7 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     private void saveGenresForFilm(int filmId, Set<Genre> genres) {
-        String sqlDelete = "DELETE FROM FILM_GENRES WHERE FILM_ID = :film_id AND GENRE_ID = :genre_id;";
+        String sqlDelete = "DELETE FROM FILM_GENRES WHERE FILM_ID = :film_id;";
         String sqlInsert = "INSERT INTO FILM_GENRES(FILM_ID, GENRE_ID) VALUES ( :film_id, :genre_id );";
 
         Map<String, Object>[] batchOfInputs = new HashMap[genres.size()];
@@ -408,12 +429,16 @@ public class JdbcFilmRepository implements FilmRepository {
         }
 
 
-        jdbc.batchUpdate(sqlDelete, batchOfInputs);
-        jdbc.batchUpdate(sqlInsert, batchOfInputs);
+        if (count != 0) {
+            jdbc.batchUpdate(sqlDelete, batchOfInputs);
+            jdbc.batchUpdate(sqlInsert, batchOfInputs);
+            return;
+        }
+        jdbc.update(sqlDelete, Map.of("film_id", filmId));
     }
 
     private void saveDirectorsForFilm(int filmId, Set<Director> directors) {
-        String sqlDelete = "DELETE FROM FILM_DIRECTORS WHERE FILM_ID = :film_id AND DIRECTOR_ID = :director_id;";
+        String sqlDelete = "DELETE FROM FILM_DIRECTORS WHERE FILM_ID = :film_id";
         String sqlInsert = "INSERT INTO FILM_DIRECTORS (FILM_ID, DIRECTOR_ID) VALUES ( :film_id, :director_id );";
 
         Map<String, Object>[] batchOfInputs = new HashMap[directors.size()];
@@ -426,7 +451,11 @@ public class JdbcFilmRepository implements FilmRepository {
             batchOfInputs[count++] = param;
         }
 
-        jdbc.batchUpdate(sqlDelete, batchOfInputs);
-        jdbc.batchUpdate(sqlInsert, batchOfInputs);
+        if (count != 0) {
+            jdbc.batchUpdate(sqlDelete, batchOfInputs);
+            jdbc.batchUpdate(sqlInsert, batchOfInputs);
+            return;
+        }
+        jdbc.update(sqlDelete, Map.of("film_id", filmId));
     }
 }

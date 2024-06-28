@@ -59,16 +59,12 @@ public class JdbcReviewRepository implements ReviewRepository {
         String sql = """
                 UPDATE REVIEWS
                     SET CONTENT = :content,
-                        IS_POSITIVE = :is_positive,
-                        USER_ID = :user_id,
-                        FILM_ID = :film_id
+                        IS_POSITIVE = :is_positive
                 WHERE REVIEW_ID = :review_id;
                 """;
         Map<String, Object> param = Map.of(
                 "content", review.getContent(),
                 "is_positive", review.getIsPositive(),
-                "user_id", review.getUserId(),
-                "film_id", review.getFilmId(),
                 "review_id", review.getId()
                 );
 

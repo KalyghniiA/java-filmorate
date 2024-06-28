@@ -72,7 +72,6 @@ public class FilmController {
     }
 
     @DeleteMapping(value = "/films/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeLike(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("Получен DELETE запрос на удаление лайка");
         filmService.removeLike(id, userId);
@@ -88,7 +87,7 @@ public class FilmController {
     }
 
     @GetMapping(value = "/films/popular")
-    public Collection<Film> getPopularFilms(@RequestParam(required = false) @Min(0) Integer count,
+    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") @Min(0) Integer count,
                                             @RequestParam(defaultValue = "0") Integer genreId,
                                             @RequestParam(required = false) @Min(1895) Integer year) {
         log.info("Получен GET запрос на получение популярных фильмов");

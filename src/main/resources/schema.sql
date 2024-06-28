@@ -5,9 +5,7 @@ create table if not exists USERS
     LOGIN    CHARACTER VARYING(255) not null,
     NAME     CHARACTER VARYING(255),
     EMAIL    CHARACTER VARYING(255) not null,
-    BIRTHDAY DATE                   not null,
-    constraint "USERS_pk"
-        unique (EMAIL)
+    BIRTHDAY DATE                   not null
 );
 
 create table if not exists RATINGS

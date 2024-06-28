@@ -3,15 +3,14 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.DirectorRepository;
 import ru.yandex.practicum.filmorate.dao.FilmRepository;
+import ru.yandex.practicum.filmorate.dao.GenreRepository;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -19,12 +18,17 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userStorage;
     private final FilmRepository filmRepository;
     private final EventService eventService;
+    private final GenreRepository genreRepository;
+    private final DirectorRepository directorRepository;
+
 
     @Autowired
-    public UserServiceImpl(UserRepository userStorage, FilmRepository filmRepository, EventService eventService) {
+    public UserServiceImpl(UserRepository userStorage, FilmRepository filmRepository, EventService eventService, GenreRepository genreRepository, DirectorRepository directorRepository) {
         this.userStorage = userStorage;
         this.filmRepository = filmRepository;
         this.eventService = eventService;
+        this.genreRepository = genreRepository;
+        this.directorRepository = directorRepository;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User post(User user) {
-        if (user.getName() == null) {
+        if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         return userStorage.save(user);
@@ -53,7 +57,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User put(User user) {
-        if (user.getName() == null) {
+        if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         userStorage.getById(user.getId()).orElseThrow(() -> new NotFoundException(String.format("Пользователя id %s нет в базе", user.getId())));
@@ -101,43 +105,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<Optional<Film>> getRecommendations(int userId) {
-        List<Integer> userFilms = filmRepository.getLikedFilmsByUserId(userId);
-        List<User> users = getAll();
-        HashMap<Integer, List<Integer>> likes = new HashMap<>();
-        for (User user : users) {
-            if (user.getId() != userId) {
-                likes.put(user.getId(), filmRepository.getLikedFilmsByUserId(user.getId()));
-            }
-        }
-        int maxCommonElementsCount = 0;
-        List<Integer> films = new ArrayList<>();
-        for (Integer anotherUserId : likes.keySet()) {
-            List<Integer> likedFilms = likes.get(anotherUserId);
-            int commonSum = 0;
-            for (Integer filmId : userFilms) {
-                for (Integer anotherFilmId : likedFilms) {
-                    if (filmId == anotherFilmId) {
-                        commonSum++;
-                    }
-                }
-            }
-            if (commonSum > maxCommonElementsCount) {
-                maxCommonElementsCount = commonSum;
-                films = likedFilms;
-            }
-        }
-        films.removeAll(userFilms);
-        List<Optional<Film>> recommendations = new ArrayList<>();
-        for (Integer filmId : films) {
-            recommendations.add(filmRepository.getById(filmId));
-        }
-        log.info(String.format("Список рекомендаций для пользователя с id %s отправлен", userId));
-        return recommendations;
-    }
-
-    @Override
     public List<Event> getEventsByUser(Integer userId) {
-        return eventService.getUserEvents(userId);
+        userStorage.getById(userId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
+        List<Event> events = eventService.getUserEvents(userId);
+        if (events.isEmpty()) {
+            throw new NotFoundException("У данного пользователя нет событий");
+        }
+
+        return events;
     }
 }
