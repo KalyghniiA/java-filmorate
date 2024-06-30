@@ -22,5 +22,5 @@ public class Event {
     private final Integer entityId; // идентификатор сущности, с которой произошло событие
 
     @NotNull
-    private final Long timestamp;
+    private Long timestamp =  System.currentTimeMillis();
 }

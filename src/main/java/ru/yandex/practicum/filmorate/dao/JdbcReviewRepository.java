@@ -22,13 +22,16 @@ public class JdbcReviewRepository implements ReviewRepository {
     @Override
     public Optional<Review> getById(int id) {
         String sql = """
-                SELECT REVIEW_ID,
+                SELECT REVIEWS.REVIEW_ID AS REVIEW_ID,
                        CONTENT,
                        IS_POSITIVE,
-                       USER_ID,
-                       FILM_ID
+                       REVIEWS.USER_ID AS USER_ID,
+                       FILM_ID,
+                       SUM(IS_LIKE) AS USEFUL
                 FROM REVIEWS
-                WHERE REVIEW_ID = :review_id;
+                LEFT JOIN REVIEWS_LIKES ON REVIEWS.REVIEW_ID = REVIEWS_LIKES.REVIEW_ID
+                WHERE REVIEWS.REVIEW_ID = :review_id
+                GROUP BY REVIEWS.REVIEW_ID;
                 """;
 
         Map<String, Object> param = Map.of("review_id", id);
@@ -83,18 +86,15 @@ public class JdbcReviewRepository implements ReviewRepository {
     public List<Review> getReviews(int count) {
         //не уверен в получении полезности
         String sql = """
-                SELECT REVIEW_ID,
+                SELECT REVIEWS.REVIEW_ID AS REVIEW_ID,
                        CONTENT,
                        IS_POSITIVE,
-                       USER_ID,
+                       REVIEWS.USER_ID AS USER_ID,
                        FILM_ID,
-                       ((SELECT COUNT(REVIEWS_LIKES.REVIEW_ID)
-                         FROM REVIEWS_LIKES
-                         WHERE IS_LIKE IS TRUE AND REVIEWS_LIKES.REVIEW_ID = REVIEWS.REVIEW_ID) -
-                        (SELECT COUNT(REVIEWS_LIKES.REVIEW_ID)
-                         FROM REVIEWS_LIKES
-                         WHERE IS_LIKE IS FALSE AND REVIEWS_LIKES.REVIEW_ID = REVIEWS.REVIEW_ID)) AS USEFUL
+                       CASE WHEN IS_LIKE IS NULL THEN 0 ELSE SUM(IS_LIKE) END AS USEFUL
                 FROM REVIEWS
+                    LEFT JOIN REVIEWS_LIKES ON REVIEWS.REVIEW_ID = REVIEWS_LIKES.REVIEW_ID
+                GROUP BY REVIEWS.REVIEW_ID
                 ORDER BY USEFUL desc
                 LIMIT :count;
                 """;
@@ -108,19 +108,16 @@ public class JdbcReviewRepository implements ReviewRepository {
     public List<Review> getReviewsByFilm(int filmId, int count) {
         //не уверен в получении полезности
         String sql = """
-                SELECT REVIEW_ID,
+                SELECT REVIEWS.REVIEW_ID AS REVIEW_ID,
                        CONTENT,
                        IS_POSITIVE,
-                       USER_ID,
+                       REVIEWS.USER_ID AS USER_ID,
                        FILM_ID,
-                       ((SELECT COUNT(REVIEWS_LIKES.REVIEW_ID)
-                         FROM REVIEWS_LIKES
-                         WHERE IS_LIKE IS TRUE AND REVIEWS_LIKES.REVIEW_ID = REVIEWS.REVIEW_ID) -
-                        (SELECT COUNT(REVIEWS_LIKES.REVIEW_ID)
-                         FROM REVIEWS_LIKES
-                         WHERE IS_LIKE IS FALSE AND REVIEWS_LIKES.REVIEW_ID = REVIEWS.REVIEW_ID)) AS USEFUL
+                       CASE WHEN IS_LIKE IS NULL THEN 0 ELSE SUM(IS_LIKE) END AS USEFUL
                 FROM REVIEWS
+                    LEFT JOIN REVIEWS_LIKES ON REVIEWS.REVIEW_ID = REVIEWS_LIKES.REVIEW_ID
                 WHERE FILM_ID = :film_id
+                GROUP BY REVIEWS.REVIEW_ID
                 ORDER BY USEFUL desc
                 LIMIT :count;
                 """;

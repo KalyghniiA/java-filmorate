@@ -10,14 +10,17 @@ import java.sql.SQLException;
 public class ReviewExtractor implements ResultSetExtractor<Review> {
     @Override
     public Review extractData(ResultSet rs) throws SQLException, DataAccessException {
-        if (!rs.next()) return null;
-        Review review = new Review(
-                rs.getString("CONTENT"),
-                rs.getBoolean("IS_POSITIVE"),
-                rs.getInt("USER_ID"),
-                rs.getInt("FILM_ID"));
-        review.setId(rs.getInt("REVIEW_ID"));
+        Review review = null;
+        while (rs.next()) {
+            review = new Review(
+                    rs.getString("CONTENT"),
+                    rs.getBoolean("IS_POSITIVE"),
+                    rs.getInt("USER_ID"),
+                    rs.getInt("FILM_ID"));
+            review.setUseful(rs.getInt("USEFUL"));
+            review.setId(rs.getInt("REVIEW_ID"));
 
+        }
         return review;
     }
 }

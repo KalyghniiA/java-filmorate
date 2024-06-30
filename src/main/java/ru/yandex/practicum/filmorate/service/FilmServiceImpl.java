@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.model.*;
 
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class FilmServiceImpl implements FilmService {
@@ -42,41 +41,37 @@ public class FilmServiceImpl implements FilmService {
     public Film post(Film film) {
         if (film.getMpa() != null) {
             film.setMpa(
-                    mpaRepository.getRatingById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
+                    mpaRepository.getById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
             );
         }
 
         if (!film.getGenres().isEmpty()) {
-            Set<Genre> genres = genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList());
+            List<Genre> genres = genreRepository.getById(film.getGenres().stream().map(Genre::getId).toList());
             if (genres.size() != film.getGenres().size()) {
                 throw new ValidationException("Одного из жанров нет в базе");
             }
 
-            film.setGenres(genres);
+            film.getGenres().clear();
+            film.getGenres().addAll(genres);
         }
 
         if (!film.getDirectors().isEmpty()) {
-            Set<Director> directors = Set.copyOf(directorRepository.getDirectorsById(film.getDirectors().stream().map(Director::getId).toList()));
+            List<Director> directors = directorRepository.getById(film.getDirectors().stream().map(Director::getId).toList());
             if (directors.size() != film.getDirectors().size()) {
                 throw new ValidationException("Одного из режиссеров нет в базе");
             }
-
-            film.setDirectors(directors);
+            film.getDirectors().clear();
+            film.getDirectors().addAll(directors);
         }
-
-
         return filmRepository.save(film);
     }
 
     @Override
     public Film get(int id) {
-        Film film = filmRepository.getById(id)
+        return filmRepository.getById(id)
                 .orElseThrow(
                         () -> new NotFoundException(String.format("Фильма с id %s нет в базе", id))
                 );
-        film.setGenres(genreRepository.getGenresByFilm(film.getId()));
-        film.setDirectors(directorRepository.getDirectorsByFilm(id));
-        return film;
     }
 
     @Override
@@ -86,7 +81,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getAll() {
-        return fillingFilms(filmRepository.getAll());
+        return filmRepository.getAll();
     }
 
     @Override
@@ -98,25 +93,27 @@ public class FilmServiceImpl implements FilmService {
 
         if (film.getMpa() != null) {
             film.setMpa(
-                    mpaRepository.getRatingById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
+                    mpaRepository.getById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
             );
         }
 
         if (!film.getGenres().isEmpty()) {
-            Set<Genre> genres = genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList());
+            List<Genre> genres = genreRepository.getById(film.getGenres().stream().map(Genre::getId).toList());
             if (genres.size() != film.getGenres().size()) {
                 throw new ValidationException("Одного из жанров нет в базе");
             }
-            film.setGenres(genres);
+            film.getGenres().clear();
+            film.getGenres().addAll(genres);
         }
 
         if (!film.getDirectors().isEmpty()) {
-            Set<Director> directors = Set.copyOf(directorRepository.getDirectorsById(film.getDirectors().stream().map(Director::getId).toList()));
+            List<Director> directors = directorRepository.getById(film.getDirectors().stream().map(Director::getId).toList());
             if (directors.size() != film.getDirectors().size()) {
                 throw new ValidationException("Одного из режиссеров нет в базе");
             }
 
-            film.setDirectors(directors);
+            film.getDirectors().clear();
+            film.getDirectors().addAll(directors);
         }
 
         filmRepository.update(film);
@@ -129,9 +126,9 @@ public class FilmServiceImpl implements FilmService {
                 .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
         userRepository.getById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
-        likeRepository.addLike(filmId, userId);
+        likeRepository.add(filmId, userId);
         eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.ADD.name(),
-                filmId, System.currentTimeMillis()));
+                filmId));
     }
 
     @Override
@@ -140,33 +137,33 @@ public class FilmServiceImpl implements FilmService {
                 .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
         userRepository.getById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
-        likeRepository.removeLike(filmId, userId);
+        likeRepository.remove(filmId, userId);
         eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.REMOVE.name(),
-                filmId, System.currentTimeMillis()));
+                filmId));
     }
 
     @Override
     public List<Film> getSearched(String query, String by) {
         return switch (by.toLowerCase().trim()) {
-            case "title" -> fillingFilms(filmRepository.searchFilmIds(query, by));
-            case "director" -> fillingFilms(filmRepository.searchFilmIds(query, by));
+            case "title" -> filmRepository.searchFilmIds(query, by);
+            case "director" -> filmRepository.searchFilmIds(query, by);
             case "title,director", "director,title" ->
                 //TODO придумать нормальное разделение, что если параметра будет не 2, а много(в параметре нужен массив)
-                    fillingFilms(filmRepository.searchFilmIds(query, by));
+                    filmRepository.searchFilmIds(query, by);
             default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
         };
     }
 
     @Override
     public List<Film> getPopular(Integer count, Integer genreId, Integer year) { //для разных запросов
-        return fillingFilms(filmRepository.getTopPopularWithFilter(count, year, genreId));
+        return filmRepository.getTopPopularWithFilter(count, year, genreId);
     }
 
     @Override
     public List<Film> getFilmsToDirector(int directorId, String sortBy) {
         List<Film> films = switch (sortBy.toLowerCase().trim()) {
-            case "year" -> fillingFilms(filmRepository.getFilmsToDirectorSortByYear(directorId));
-            case "likes" -> fillingFilms(filmRepository.getFilmsToDirectorSortByLikes(directorId));
+            case "year" -> filmRepository.getFilmsToDirectorSortByYear(directorId);
+            case "likes" -> filmRepository.getFilmsToDirectorSortByLikes(directorId);
             default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
         };
 
@@ -183,28 +180,14 @@ public class FilmServiceImpl implements FilmService {
         userRepository.getById(friendId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
         //требуется делать отдельный метод для получения списка пользователей по айди что бы уменьшить обращения к базе?
-        return fillingFilms(filmRepository.getCommonFilms(userId, friendId));
+        return filmRepository.getCommonFilms(userId, friendId);
     }
 
 
     @Override
     public List<Film> getRecommendations(int userId) {
-        return fillingFilms(filmRepository.getFilmsById(filmRepository.getRecommendationFilmIdByUserId(userId)));
+        return filmRepository.getFilmsById(filmRepository.getRecommendationFilmIdByUserId(userId));
     }
 
-    private List<Film> fillingFilms(List<Film> films) {
-        List<Integer> filmsId = films.stream().map(Film::getId).toList();
-        Map<Integer, Set<Genre>> genresForFilms = genreRepository.getGenresByFilms(filmsId);
-        Map<Integer, Set<Director>> directorsForFilms = directorRepository.getDirectorsByFilms(filmsId);
-        return films.stream()
-                .peek(film -> {
-                    if (genresForFilms.containsKey(film.getId())) {
-                        film.setGenres(genresForFilms.get(film.getId()));
-                    }
-                    if (directorsForFilms.containsKey(film.getId())) {
-                        film.setDirectors(directorsForFilms.get(film.getId()));
-                    }
-                })
-                .collect(Collectors.toList());
-    }
+
 }

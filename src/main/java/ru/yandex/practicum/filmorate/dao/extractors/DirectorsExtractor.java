@@ -13,17 +13,12 @@ public class DirectorsExtractor implements ResultSetExtractor<List<Director>> {
     @Override
     public List<Director> extractData(ResultSet rs) throws SQLException, DataAccessException {
         List<Director> directors = new ArrayList<>();
-        if (!rs.next()) {
-            return directors;
-        }
-
-        do {
+        while (rs.next()) {
             Director director = new Director();
             director.setId(rs.getInt("DIRECTOR_ID"));
             director.setName(rs.getString("NAME"));
             directors.add(director);
-        } while (rs.next());
-
+        }
         return directors;
     }
 }

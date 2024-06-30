@@ -81,7 +81,7 @@ public class ReviewController {
 
     @DeleteMapping("/reviews/{id}/like/{userId}")
     public void deleteLike(
-            @PathVariable Integer id,
+            @PathVariable int id,
             @PathVariable Integer userId) {
         log.info(String.format("Получен запрос на удаления лайка отзыву id %s от пользователя id %s", id, userId));
         reviewService.deleteMarkToReview(id, userId, true);
@@ -90,7 +90,7 @@ public class ReviewController {
 
     @DeleteMapping("/reviews/{id}/dislike/{userId}")
     public void deleteDislike(
-            @PathVariable Integer id,
+            @PathVariable int id,
             @PathVariable Integer userId) {
         log.info(String.format("Получен запрос на удаления дизлайка отзыву id %s от пользователя id %s", id, userId));
         reviewService.deleteMarkToReview(id, userId, false);

@@ -6,13 +6,13 @@ import ru.yandex.practicum.filmorate.model.Director;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-public class DirectorsForFilmExtractor implements ResultSetExtractor<Set<Director>> {
+public class DirectorsForFilmExtractor implements ResultSetExtractor<List<Director>> {
     @Override
-    public Set<Director> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Set<Director> directors = new HashSet<>();
+    public List<Director> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        List<Director> directors = new ArrayList<>();
         while (rs.next()) {
             Director director = new Director();
             director.setId(rs.getInt("DIRECTOR_ID"));

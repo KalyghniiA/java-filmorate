@@ -55,6 +55,8 @@ create table IF NOT EXISTS FRIENDS
 (
     USER_ID   INTEGER not null,
     FRIEND_ID INTEGER not null,
+    constraint "FRIENDS_pk"
+        primary key (USER_ID, FRIEND_ID),
     constraint FK_FRIENDS_USER_ID
         foreign key (USER_ID) references USERS ON DELETE CASCADE,
     constraint FK_FRIENDS_FRIEND_ID
@@ -75,6 +77,8 @@ create table IF NOT EXISTS LIKES
 (
     FILM_ID INTEGER not null,
     USER_ID INTEGER not null,
+    constraint "LIKES_pk"
+        primary key (FILM_ID, USER_ID),
     constraint FK_LIKES_FILM_ID
         foreign key (FILM_ID) references FILMS ON DELETE CASCADE,
     constraint FK_LIKES_USER_ID
@@ -101,7 +105,7 @@ CREATE TABLE IF NOT EXISTS REVIEWS_LIKES
 (
     REVIEW_ID INTEGER NOT NULL,
     USER_ID INTEGER NOT NULL,
-    IS_LIKE BOOLEAN NOT NULL,
+    IS_LIKE INTEGER NOT NULL,
     constraint "REVIEWS_LIKES_pk"
         primary key (REVIEW_ID, USER_ID, IS_LIKE)
 );

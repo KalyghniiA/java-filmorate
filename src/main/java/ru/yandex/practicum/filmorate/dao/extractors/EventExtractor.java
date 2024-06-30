@@ -19,10 +19,10 @@ public class EventExtractor implements ResultSetExtractor<List<Event>> {
                     rs.getInt("USER_ID"),
                     rs.getString("EVENT_TYPE"),
                     rs.getString("OPERATION"),
-                    rs.getInt("ENTITY_ID"),
-                    rs.getLong("TIMESTAMP")
+                    rs.getInt("ENTITY_ID")
             );
             event.setEventId(rs.getInt("EVENT_ID"));
+            event.setTimestamp(rs.getLong("TIMESTAMP"));
             events.add(event);
         }
         return events;

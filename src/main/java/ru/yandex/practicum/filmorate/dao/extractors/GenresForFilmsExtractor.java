@@ -8,13 +8,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public class GenresForFilmsExtractor implements ResultSetExtractor<Map<Integer, Set<Genre>>> {
+public class GenresForFilmsExtractor implements ResultSetExtractor<Map<Integer, List<Genre>>> {
     @Override
-    public Map<Integer, Set<Genre>> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Map<Integer, Set<Genre>> genresForFilms = new HashMap<>();
+    public Map<Integer, List<Genre>> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        Map<Integer, List<Genre>> genresForFilms = new HashMap<>();
         while (rs.next()) {
             Integer filmId = rs.getInt("FILM_ID");
-            Set<Genre> genres = genresForFilms.computeIfAbsent(filmId, k -> new TreeSet<>(Comparator.comparingInt(Genre::getId)));
+            List<Genre> genres = genresForFilms.computeIfAbsent(filmId, k -> new ArrayList<>());
             genres.add(new Genre(rs.getInt("GENRE_ID"), rs.getString("NAME")));
         }
 

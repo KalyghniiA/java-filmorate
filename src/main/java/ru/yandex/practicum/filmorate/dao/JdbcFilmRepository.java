@@ -6,9 +6,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dao.extractors.FilmExtractor;
-import ru.yandex.practicum.filmorate.dao.extractors.FilmsExtractor;
-import ru.yandex.practicum.filmorate.dao.extractors.RecommendationFilmIdByUserIdExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.*;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -29,9 +27,17 @@ public class JdbcFilmRepository implements FilmRepository {
                        RELEASE_DATE,
                        DURATION,
                        FILMS.RATING_ID,
-                       RATINGS.NAME AS RATING_NAME
+                       RATINGS.NAME AS RATING_NAME,
+                       GENRES.GENRE_ID AS GENRE_ID,
+                       GENRES.NAME AS GENRE_NAME,
+                       DIRECTORS.DIRECTOR_ID AS DIRECTOR_ID,
+                       DIRECTORS.NAME AS DIRECTOR_NAME
                 FROM FILMS
-                JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
+                        JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
+                        LEFT JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
+                        LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
+                        LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
+                        LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                 WHERE FILMS.FILM_ID = :film_id;
                 """;
         Map<String, Object> param = Map.of("film_id", id);
@@ -341,7 +347,12 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     private List<Film> getFilms(String sql, Map<String, Object> param) {
-        return jdbc.query(sql, param, new FilmsExtractor());
+        List<Film> films = jdbc.query(sql, param, new FilmsExtractor());
+        if (films != null) {
+            fillingFilmsWithGenres(films);
+            fillingFilmsWithDirectors(films);
+        }
+        return films;
     }
 
     private void saveGenresForFilm(int filmId, Set<Genre> genres) {
@@ -387,5 +398,43 @@ public class JdbcFilmRepository implements FilmRepository {
             return;
         }
         jdbc.update(sqlDelete, Map.of("film_id", filmId));
+    }
+
+    private void fillingFilmsWithGenres(List<Film> films) {
+        String sql = """
+                SELECT FILM_ID,
+                       FILM_GENRES.GENRE_ID AS GENRE_ID,
+                       NAME
+                FROM FILM_GENRES
+                    LEFT JOIN GENRES ON GENRES.GENRE_ID = FILM_GENRES.GENRE_ID
+                WHERE FILM_ID IN (:films_id);
+                """;
+        Map<String, Object> param = Map.of("films_id", films.stream().map(Film::getId).toList());
+        Map<Integer, List<Genre>> genres = jdbc.query(sql, param, new GenresForFilmsExtractor());
+
+        films.forEach(film -> {
+                if (genres != null && genres.containsKey(film.getId())) {
+                    film.getGenres().addAll(genres.get(film.getId()));
+                }
+        });
+    }
+
+    private void fillingFilmsWithDirectors(List<Film> films) {
+        String sql = """
+                SELECT FILM_ID,
+                       DIRECTORS.DIRECTOR_ID AS DIRECTOR_ID,
+                       NAME
+                FROM FILM_DIRECTORS
+                LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
+                WHERE FILM_ID IN (:films_id);
+                """;
+        Map<String, Object> param = Map.of("films_id", films.stream().map(Film::getId).toList());
+        Map<Integer, List<Director>> directors = jdbc.query(sql, param, new DirectorsForFilmsExtractor());
+
+        films.forEach(film -> {
+                    if (directors != null && directors.containsKey(film.getId())) {
+                        film.getDirectors().addAll(directors.get(film.getId()));
+                    }
+        });
     }
 }

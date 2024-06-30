@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.service.DirectorService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -35,7 +36,7 @@ public class DirectorController {
     }
 
     @PostMapping(value = "/directors")
-    public Director createDirector(@RequestBody Director director) {
+    public Director createDirector(@RequestBody @Valid Director director) {
         log.info("Получен запрос на добавление режиссера");
         Director newDirector = directorService.saveDirector(director);
         log.info(String.format("Новый директор сохранен с id %s", newDirector.getId()));
@@ -43,7 +44,7 @@ public class DirectorController {
     }
 
     @PutMapping(value = "/directors")
-    public Director updateDirector(@RequestBody Director director) {
+    public Director updateDirector(@RequestBody @Valid Director director) {
         log.info(String.format("Получен запрос на обновление режиссера с id %s", director.getId()));
         Director newDirector = directorService.updateDirector(director);
         log.info(String.format("Директор с id %s обновлен", newDirector.getId()));
