@@ -18,25 +18,15 @@ public interface FilmRepository {
 
     List<Film> getFilmsById(List<Integer> filmsId);
 
-    List<Film> getTopPopular(Integer count);
-
-    List<Film> getPopularFilmsByYearAndGenre(Integer count, Integer year, Integer genreId);
-
-    List<Film> getPopularFilmsByYear(Integer count, Integer year);
-
-    List<Film> getPopularFilmsByGenre(Integer count, Integer genreId);
+    List<Film> getTopPopularWithFilter(Integer count, Integer year, Integer genreId);
 
     List<Film> getFilmsToDirectorSortByYear(int directorId);
 
     List<Film> getFilmsToDirectorSortByLikes(int directorId);
 
+    List<Film> searchFilmIds(String query, String by);
+
     List<Film> getCommonFilms(int userId, int friendId);
-
-    List<Film> getSearchedFiltrByTitle(String query);
-
-    List<Film> getSearchedFiltrByDirector(String query);
-
-    List<Film> getSearchedFiltrByTitleAndDirector(String query);
 
     List<Integer> getRecommendationFilmIdByUserId(int userId);
 }

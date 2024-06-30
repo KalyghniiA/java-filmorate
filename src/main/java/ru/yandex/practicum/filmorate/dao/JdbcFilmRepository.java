@@ -134,27 +134,61 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getTopPopular(Integer count) {
-        String sql = """
+    public List<Film> getTopPopularWithFilter(Integer count, Integer year, Integer genreId) {
+        Map<String, Object> param = new HashMap<>();
+
+        String concatJoin;
+        String concatWhere;
+        String concatLimit;
+        if (year != null && genreId != null) {
+            concatJoin = "JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID \n";
+            concatWhere = "WHERE YEAR(FILMS.RELEASE_DATE) = :year AND FILM_GENRES.GENRE_ID = :genreId \n";
+            param.put("year", year);
+            param.put("genreId", genreId);
+        } else if (year == null && genreId != null) {
+            concatJoin = "JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID \n";
+            concatWhere = "WHERE FILM_GENRES.GENRE_ID = :genreId \n";
+            param.put("genreId", genreId);
+        } else if (year != null) {
+            concatJoin = " \n";
+            concatWhere = "WHERE YEAR(FILMS.RELEASE_DATE) = :year \n";
+            param.put("year", year);
+        } else {
+            concatJoin = " \n";
+            concatWhere = " \n";
+        }
+        if (count != null) {
+            concatLimit = """
+                    LIMIT :count ;
+                    """;
+            param.put("count", count);
+        } else {
+            concatLimit = """
+                    ";"
+                    """;
+        }
+        String baseSql = """
                 SELECT
-                    FILMS.FILM_ID AS ID,
-                    FILMS.NAME AS FILM_NAME,
+                    FILMS.FILM_ID,
+                    FILMS.NAME,
                     DESCRIPTION,
                     RELEASE_DATE,
                     DURATION,
                     FILMS.RATING_ID,
-                    RATINGS.NAME AS RATING_NAME,
-                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
+                    RATINGS.NAME AS RATING_NAME
                 FROM FILMS
+                         LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
                          JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                GROUP BY ID
-                ORDER BY LIKE_COUNT DESC
-                LIMIT :count;
                 """;
-        Map<String, Object> param = Map.of("count", count);
 
-        return getFilms(sql, param);
+        String bodySql = """
+                GROUP BY FILMS.FILM_ID
+                ORDER BY count(LIKES.FILM_ID) DESC
+                """;
+
+        String finalSql = baseSql + concatJoin + concatWhere + bodySql + concatLimit;
+
+        return getFilms(finalSql, param);
     }
 
     @Override
@@ -210,88 +244,17 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopularFilmsByYear(Integer count, Integer year) {
-        String sql = """
-                SELECT
-                    FILMS.FILM_ID AS ID,
-                    FILMS.NAME AS FILM_NAME,
-                    DESCRIPTION,
-                    RELEASE_DATE,
-                    DURATION,
-                    FILMS.RATING_ID,
-                    RATINGS.NAME AS RATING_NAME,
-                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
-                FROM FILMS
-                         JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE YEAR(FILMS.RELEASE_DATE) = :year
-                GROUP BY ID
-                ORDER BY LIKE_COUNT DESC
-                """;
-
-        Map<String, Object> param = Map.of("year", year);
-
-        return getFilms(sql, param);
-    }
-
-    @Override
-    public List<Film> getPopularFilmsByGenre(Integer count, Integer genreId) {
-        String sql = """
-                SELECT
-                    FILMS.FILM_ID AS ID,
-                    FILMS.NAME AS FILM_NAME,
-                    DESCRIPTION,
-                    RELEASE_DATE,
-                    DURATION,
-                    FILMS.RATING_ID,
-                    RATINGS.NAME AS RATING_NAME,
-                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
-                FROM FILMS
-                         JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                         LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
-                         JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE GENRES.GENRE_ID = :genreId
-                GROUP BY ID, FILM_GENRES.GENRE_ID
-                ORDER BY LIKE_COUNT DESC
-                """;
-
-        Map<String, Object> param = Map.of("genreId", genreId);
-
-        return getFilms(sql, param);
-    }
-
-    @Override
-    public List<Film> getPopularFilmsByYearAndGenre(Integer count, Integer year, Integer genreId) {
-        String sql = """
-                SELECT
-                    FILMS.FILM_ID AS ID,
-                    FILMS.NAME AS FILM_NAME,
-                    DESCRIPTION,
-                    RELEASE_DATE,
-                    DURATION,
-                    FILMS.RATING_ID,
-                    RATINGS.NAME AS RATING_NAME,
-                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
-                FROM FILMS
-                         JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID
-                         LEFT JOIN GENRES ON FILM_GENRES.GENRE_ID = GENRES.GENRE_ID
-                         JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE YEAR(FILMS.RELEASE_DATE) = :year AND GENRES.GENRE_ID = :genreId
-                GROUP BY ID, FILM_GENRES.GENRE_ID
-                ORDER BY LIKE_COUNT DESC
-                """;
-
-        Map<String, Object> param = Map.of("year", year, "genreId", genreId);
-
-        return getFilms(sql, param);
-    }
-
-    @Override
-    public List<Film> getSearchedFiltrByTitleAndDirector(String query) {
-        String concatParam = "%" + query.toLowerCase() + "%";
-        String sql = """
+    public List<Film> searchFilmIds(String query, String by) {
+        String concatLike = "%" + query.toLowerCase() + "%";
+        String concatWhere;
+        if (by.equals("title")) {
+            concatWhere = "WHERE LOWER(FILMS.NAME) LIKE :concatLike";
+        } else if (by.equals("director")) {
+            concatWhere = "WHERE LOWER(DIRECTORS.NAME) LIKE :concatLike";
+        } else {
+            concatWhere = "WHERE LOWER(FILMS.NAME) LIKE :concatLike OR LOWER(DIRECTORS.NAME) LIKE :concatLike";
+        }
+        String baseSql = """
                 SELECT
                     FILMS.FILM_ID,
                     FILMS.NAME,
@@ -305,68 +268,18 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
                          LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE LOWER(FILMS.NAME) LIKE :query OR LOWER(DIRECTORS.NAME) LIKE :query
-                GROUP BY FILMS.FILM_ID
-                ORDER BY count(LIKES.FILM_ID) DESC;
                 """;
 
-        Map<String, Object> param = Map.of("query", concatParam);
-
-        return getFilms(sql, param);
-    }
-
-    @Override
-    public List<Film> getSearchedFiltrByTitle(String query) {
-        String concatParam = "%" + query.toLowerCase() + "%";
-        String sql = """
-                SELECT
-                    FILMS.FILM_ID,
-                    FILMS.NAME,
-                    DESCRIPTION,
-                    RELEASE_DATE,
-                    DURATION,
-                    FILMS.RATING_ID,
-                    RATINGS.NAME AS RATING_NAME
-                FROM FILMS
-                         JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-                         LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
-                         LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
-                         LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE LOWER(FILMS.NAME) LIKE :query
-                GROUP BY FILMS.FILM_ID
-                ORDER BY count(LIKES.FILM_ID) DESC;
+        String endSql = """
+                    GROUP BY FILMS.FILM_ID
+                    ORDER BY count(LIKES.FILM_ID) DESC
                 """;
 
-        Map<String, Object> param = Map.of("query", concatParam);
+        String finalSql = baseSql + concatWhere + endSql;
 
-        return getFilms(sql, param);
-    }
+        Map<String, Object> param = Map.of("concatLike", concatLike);
 
-    @Override
-    public List<Film> getSearchedFiltrByDirector(String query) {
-        String concatParam = "%" + query.toLowerCase() + "%";
-        String sql = """
-                SELECT
-                    FILMS.FILM_ID,
-                    FILMS.NAME,
-                    DESCRIPTION,
-                    RELEASE_DATE,
-                    DURATION,
-                    FILMS.RATING_ID,
-                    RATINGS.NAME AS RATING_NAME
-                FROM FILMS
-                         JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-                         LEFT JOIN FILM_DIRECTORS ON FILMS.FILM_ID = FILM_DIRECTORS.FILM_ID
-                         LEFT JOIN DIRECTORS ON FILM_DIRECTORS.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID
-                         LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE LOWER(DIRECTORS.NAME) LIKE :query
-                GROUP BY FILMS.FILM_ID
-                ORDER BY count(LIKES.FILM_ID) DESC;
-                """;
-
-        Map<String, Object> param = Map.of("query", concatParam);
-
-        return getFilms(sql, param);
+        return getFilms(finalSql, param);
     }
 
     @Override
