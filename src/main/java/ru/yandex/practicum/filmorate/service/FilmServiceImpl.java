@@ -216,7 +216,7 @@ public class FilmServiceImpl implements FilmService {
                 for (Integer anotherFilmId : likedFilms) {
                     if (filmId == anotherFilmId) {
                         commonSum++;
-                    }
+                    }      
                 }
             }
             if (commonSum > maxCommonElementsCount) {
