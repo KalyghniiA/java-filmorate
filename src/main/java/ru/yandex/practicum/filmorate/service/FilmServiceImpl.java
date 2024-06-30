@@ -159,20 +159,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getPopular(Integer count, Integer genreId, Integer year) { //для разных запросов
-        List<Film> films = filmRepository.getTopPopularWithFilter(count, year, genreId);
-//        List<Film> films;
-//        if (genreId == 0 && year == null) {
-//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
-//        } else if (year == null) {
-//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
-//        } else if (genreId == 0) {
-//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
-//        } else {
-//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
-//        }
-
-        return films;
-//        return fillingFilms(filmRepository.getTopPopularWithFilter(count, year, genreId));
+        return fillingFilms(filmRepository.getTopPopularWithFilter(count, year, genreId));
     }
 
     @Override
