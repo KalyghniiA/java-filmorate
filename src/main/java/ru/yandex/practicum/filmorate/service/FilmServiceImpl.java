@@ -148,28 +148,31 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getSearched(String query, String by) {
         return switch (by.toLowerCase().trim()) {
-            case "title" -> fillingFilms(filmRepository.getSearchedFiltrByTitle(query));
-            case "director" -> fillingFilms(filmRepository.getSearchedFiltrByDirector(query));
+            case "title" -> fillingFilms(filmRepository.searchFilmIds(query, by));
+            case "director" -> fillingFilms(filmRepository.searchFilmIds(query, by));
             case "title,director", "director,title" ->
                 //TODO придумать нормальное разделение, что если параметра будет не 2, а много(в параметре нужен массив)
-                    fillingFilms(filmRepository.getSearchedFiltrByTitleAndDirector(query));
+                    fillingFilms(filmRepository.searchFilmIds(query, by));
             default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
         };
     }
 
     @Override
     public List<Film> getPopular(Integer count, Integer genreId, Integer year) { //для разных запросов
-        List<Film> films;
-        if (genreId == 0 && year == null) {
-            films = filmRepository.getTopPopular(count);
-        } else if (year == null) {
-            films = filmRepository.getPopularFilmsByGenre(count, genreId);
-        } else if (genreId == 0) {
-            films = filmRepository.getPopularFilmsByYear(count, year);
-        } else {
-            films = filmRepository.getPopularFilmsByYearAndGenre(count, year, genreId);
-        }
-        return fillingFilms(films);
+        List<Film> films = filmRepository.getTopPopularWithFilter(count, year, genreId);
+//        List<Film> films;
+//        if (genreId == 0 && year == null) {
+//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
+//        } else if (year == null) {
+//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
+//        } else if (genreId == 0) {
+//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
+//        } else {
+//            films = filmRepository.getTopPopularWithFilter(count, year, genreId);
+//        }
+
+        return films;
+//        return fillingFilms(filmRepository.getTopPopularWithFilter(count, year, genreId));
     }
 
     @Override
@@ -199,9 +202,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getRecommendations(int userId) {
-        List<Integer> films = new ArrayList<>();
-        films = filmRepository.getRecommendationFilmIdByUserId(userId);
-        return fillingFilms(filmRepository.getFilmsById(films));
+        return fillingFilms(filmRepository.getFilmsById(filmRepository.getRecommendationFilmIdByUserId(userId)));
     }
 
     private List<Film> fillingFilms(List<Film> films) {
