@@ -137,7 +137,7 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public void removeLike(int filmId, int userId) {
         filmRepository.getById(filmId)
-                        .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
         userRepository.getById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
         likeRepository.removeLike(filmId, userId);
@@ -174,7 +174,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getFilmsToDirector(int directorId, String sortBy) {
-        List<Film> films =  switch (sortBy.toLowerCase().trim()) {
+        List<Film> films = switch (sortBy.toLowerCase().trim()) {
             case "year" -> fillingFilms(filmRepository.getFilmsToDirectorSortByYear(directorId));
             case "likes" -> fillingFilms(filmRepository.getFilmsToDirectorSortByLikes(directorId));
             default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
@@ -199,32 +199,8 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getRecommendations(int userId) {
-        List<Integer> userFilms = filmRepository.getLikedFilmsByUserId(userId);
-        List<User> users = userRepository.getAll();
-        HashMap<Integer, List<Integer>> likes = new HashMap<>();
-        for (User user : users) {
-            if (user.getId() != userId) {
-                likes.put(user.getId(), filmRepository.getLikedFilmsByUserId(user.getId()));
-            }
-        }
-        int maxCommonElementsCount = 0;
         List<Integer> films = new ArrayList<>();
-        for (Integer anotherUserId : likes.keySet()) {
-            List<Integer> likedFilms = likes.get(anotherUserId);
-            int commonSum = 0;
-            for (Integer filmId : userFilms) {
-                for (Integer anotherFilmId : likedFilms) {
-                    if (filmId == anotherFilmId) {
-                        commonSum++;
-                    }      
-                }
-            }
-            if (commonSum > maxCommonElementsCount) {
-                maxCommonElementsCount = commonSum;
-                films = likedFilms;
-            }
-        }
-        films.removeAll(userFilms);
+        films = filmRepository.getRecommendationFilmIdByUserId(userId);
         return fillingFilms(filmRepository.getFilmsById(films));
     }
 

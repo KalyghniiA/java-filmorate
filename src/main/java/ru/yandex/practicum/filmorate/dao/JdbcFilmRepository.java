@@ -8,7 +8,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmExtractor;
 import ru.yandex.practicum.filmorate.dao.extractors.FilmsExtractor;
-import ru.yandex.practicum.filmorate.dao.extractors.LikedFilmsForUserIdExtractor;
+import ru.yandex.practicum.filmorate.dao.extractors.RecommendationFilmIdByUserIdExtractor;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -400,14 +400,31 @@ public class JdbcFilmRepository implements FilmRepository {
     }
 
     @Override
-    public List<Integer> getLikedFilmsByUserId(int userId) {
+    public List<Integer> getRecommendationFilmIdByUserId(int userId) {
         String sql = """
-                SELECT  LIKES.FILM_ID
+                with user_films as (SELECT FILM_ID
+                                    FROM LIKES
+                                    WHERE USER_ID = :user_id)
+                SELECT FILM_ID
                 FROM LIKES
-                WHERE USER_ID = :user_id
+                WHERE USER_ID in
+                      (SELECT USER_ID
+                       FROM LIKES
+                       WHERE USER_ID in
+                             (SELECT USER_ID
+                              FROM LIKES
+                              WHERE FILM_ID in
+                                    (SELECT FILM_ID
+                                     FROM user_films))
+                       GROUP BY USER_ID
+                       ORDER BY count(FILM_ID) DESC
+                       LIMIT 1)
+                EXCEPT
+                SELECT FILM_ID
+                FROM user_films;
                 """;
         Map<String, Object> param = Map.of("user_id", userId);
-        return jdbc.query(sql, param, new LikedFilmsForUserIdExtractor());
+        return jdbc.query(sql, param, new RecommendationFilmIdByUserIdExtractor());
     }
 
     private List<Film> getFilms(String sql, Map<String, Object> param) {

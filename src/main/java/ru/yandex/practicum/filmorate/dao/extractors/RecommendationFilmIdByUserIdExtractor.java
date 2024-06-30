@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LikedFilmsForUserIdExtractor implements ResultSetExtractor<List<Integer>> {
+public class RecommendationFilmIdByUserIdExtractor implements ResultSetExtractor<List<Integer>> {
 
     @Override
     public List<Integer> extractData(ResultSet rs) throws SQLException, DataAccessException {
