@@ -38,5 +38,5 @@ public interface FilmRepository {
 
     List<Film> getSearchedFiltrByTitleAndDirector(String query);
 
-    List<Integer> getLikedFilmsByUserId(int userId);
+    List<Integer> getRecommendationFilmIdByUserId(int userId);
 }
