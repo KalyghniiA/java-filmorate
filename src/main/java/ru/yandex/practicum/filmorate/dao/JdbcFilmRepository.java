@@ -197,8 +197,7 @@ public class JdbcFilmRepository implements FilmRepository {
         return getFilms(finalSql, param);
     }
 
-    @Override
-    public List<Film> getFilmsToDirectorSortByYear(int directorId) {
+    public List<Film> getFilmsToDirector(int directorId, String by) {
         String sql = """
                 SELECT
                     FILMS.FILM_ID AS ID,
@@ -216,35 +215,11 @@ public class JdbcFilmRepository implements FilmRepository {
                     SELECT FILM_ID FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :director_id
                     )
                 GROUP BY ID
-                ORDER BY YEAR(RELEASE_DATE);
+                ORDER BY CASE
+                    WHEN :by = 'year' THEN YEAR(RELEASE_DATE)
+                    WHEN :by = 'likes' THEN count(LIKES.FILM_ID) END
                 """;
-        Map<String, Object> param = Map.of("director_id", directorId);
-
-        return getFilms(sql, param);
-    }
-
-    @Override
-    public List<Film> getFilmsToDirectorSortByLikes(int directorId) {
-        String sql = """
-                SELECT
-                    FILMS.FILM_ID AS ID,
-                    FILMS.NAME AS FILM_NAME,
-                    DESCRIPTION,
-                    RELEASE_DATE,
-                    DURATION,
-                    FILMS.RATING_ID,
-                    RATINGS.NAME AS RATING_NAME,
-                    COUNT(LIKES.FILM_ID) AS LIKE_COUNT
-                FROM FILMS
-                         JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
-                         LEFT OUTER JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
-                WHERE FILMS.FILM_ID IN (
-                    SELECT FILM_ID FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :director_id
-                    )
-                GROUP BY ID
-                ORDER BY LIKE_COUNT DESC;
-                """;
-        Map<String, Object> param = Map.of("director_id", directorId);
+        Map<String, Object> param = Map.of("director_id", directorId, "by", by);
 
         return getFilms(sql, param);
     }

@@ -20,9 +20,8 @@ public interface FilmRepository {
 
     List<Film> getTopPopularWithFilter(Integer count, Integer year, Integer genreId);
 
-    List<Film> getFilmsToDirectorSortByYear(int directorId);
+    List<Film> getFilmsToDirector(int directorId, String by);
 
-    List<Film> getFilmsToDirectorSortByLikes(int directorId);
 
     List<Film> searchFilmIds(String query, String by);
 

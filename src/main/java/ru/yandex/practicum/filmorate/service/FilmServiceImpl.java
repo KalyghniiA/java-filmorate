@@ -144,14 +144,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getSearched(String query, String by) {
-        return switch (by.toLowerCase().trim()) {
-            case "title" -> filmRepository.searchFilmIds(query, by);
-            case "director" -> filmRepository.searchFilmIds(query, by);
-            case "title,director", "director,title" ->
-                //TODO придумать нормальное разделение, что если параметра будет не 2, а много(в параметре нужен массив)
-                    filmRepository.searchFilmIds(query, by);
-            default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
-        };
+        return filmRepository.searchFilmIds(query, by.toLowerCase().trim());
     }
 
     @Override
@@ -161,11 +154,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getFilmsToDirector(int directorId, String sortBy) {
-        List<Film> films = switch (sortBy.toLowerCase().trim()) {
-            case "year" -> filmRepository.getFilmsToDirectorSortByYear(directorId);
-            case "likes" -> filmRepository.getFilmsToDirectorSortByLikes(directorId);
-            default -> throw new ValidationException("Переданный параметр сортировки не поддерживается");
-        };
+        List<Film> films = filmRepository.getFilmsToDirector(directorId, sortBy.toLowerCase().trim());
 
         if (films.isEmpty()) {
             throw new NotFoundException("по данным параметрам фильмов нет");
