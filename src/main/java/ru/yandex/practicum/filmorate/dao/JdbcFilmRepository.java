@@ -135,31 +135,33 @@ public class JdbcFilmRepository implements FilmRepository {
 
     @Override
     public List<Film> getTopPopularWithFilter(Integer count, Integer year, Integer genreId) {
+        Map<String, Object> param = new HashMap<>();
+
         String concatJoin;
         String concatWhere;
-        String concatGroupBy;
         String concatLimit;
         if (year != null && genreId != null) {
             concatJoin = "JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID \n";
             concatWhere = "WHERE YEAR(FILMS.RELEASE_DATE) = :year AND FILM_GENRES.GENRE_ID = :genreId \n";
-            concatGroupBy = " , FILM_GENRES.GENRE_ID \n";
+            param.put("year", year);
+            param.put("genreId", genreId);
         } else if (year == null && genreId != null) {
             concatJoin = "JOIN FILM_GENRES ON FILMS.FILM_ID = FILM_GENRES.FILM_ID \n";
             concatWhere = "WHERE FILM_GENRES.GENRE_ID = :genreId \n";
-            concatGroupBy = " , FILM_GENRES.GENRE_ID \n";
+            param.put("genreId", genreId);
         } else if (year != null) {
             concatJoin = " \n";
             concatWhere = "WHERE YEAR(FILMS.RELEASE_DATE) = :year \n";
-            concatGroupBy = " \n";
+            param.put("year", year);
         } else {
             concatJoin = " \n";
             concatWhere = " \n";
-            concatGroupBy = " \n";
         }
         if (count != null) {
             concatLimit = """
-                    LIMIT :count;
+                    LIMIT :count ;
                     """;
+            param.put("count", count);
         } else {
             concatLimit = """
                     ";"
@@ -178,18 +180,13 @@ public class JdbcFilmRepository implements FilmRepository {
                          LEFT JOIN LIKES ON FILMS.FILM_ID = LIKES.FILM_ID
                          JOIN RATINGS ON FILMS.RATING_ID = RATINGS.RATING_ID
                 """;
-        String groupBySql = """
-                GROUP BY FILMS.FILM_ID
-                """;
 
-        String orderBySql = """
+        String bodySql = """
+                GROUP BY FILMS.FILM_ID
                 ORDER BY count(LIKES.FILM_ID) DESC
                 """;
 
-        String finalSql = baseSql + concatJoin + concatWhere + groupBySql + concatGroupBy + orderBySql + concatLimit;
-
-        Map<String, Object> param = Map.of(
-                "count", count, "year", year, "genreId", genreId);
+        String finalSql = baseSql + concatJoin + concatWhere + bodySql + concatLimit;
 
         return getFilms(finalSql, param);
     }
