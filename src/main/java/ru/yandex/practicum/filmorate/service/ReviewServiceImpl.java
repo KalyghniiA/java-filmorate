@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -41,7 +40,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review review1 = reviewRepository.save(review);
         eventService.addEvent(new Event(review1.getUserId(), EventType.REVIEW.name(), Operation.ADD.name(),
-                review1.getId(), System.currentTimeMillis()));
+                review1.getId()));
         return review1;
     }
 
@@ -54,10 +53,9 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.getById(review.getId())
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", review.getId())));
         reviewRepository.update(review);
-        //review.setUseful(usefulRepository.getUsefulToReview(review.getId()));
         Review updateReview = reviewRepository.getById(review.getId()).orElseThrow();
         eventService.addEvent(new Event(updateReview.getUserId(), EventType.REVIEW.name(), Operation.UPDATE.name(),
-                updateReview.getId(), System.currentTimeMillis()));
+                updateReview.getId()));
         return updateReview;
     }
 
@@ -65,20 +63,16 @@ public class ReviewServiceImpl implements ReviewService {
     public void deleteReview(int reviewId) {
         Review review = reviewRepository.getById(reviewId).orElseThrow(() ->
                 new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
-
         reviewRepository.delete(reviewId);
 
         eventService.addEvent(new Event(review.getUserId(), EventType.REVIEW.name(), Operation.REMOVE.name(),
-                reviewId, System.currentTimeMillis()));
+                reviewId));
     }
 
     @Override
     public Review getReview(Integer reviewId) {
-        Review review = reviewRepository.getById(reviewId)
+        return reviewRepository.getById(reviewId)
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
-
-        review.setUseful(usefulRepository.getUsefulToReview(reviewId));
-        return review;
     }
 
     @Override
@@ -88,12 +82,9 @@ public class ReviewServiceImpl implements ReviewService {
                     .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
         }
 
-        List<Review> reviews = filmId == null
+        return filmId == null
                 ? reviewRepository.getReviews(count)
                 : reviewRepository.getReviewsByFilm(filmId, count);
-
-        return fillingReviews(reviews);
-
     }
 
     @Override
@@ -104,9 +95,9 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
 
         if (isLike) {
-            usefulRepository.addLikeToReview(reviewId, userId);
+            usefulRepository.addLike(reviewId, userId);
         } else {
-            usefulRepository.addDislikeToReview(reviewId, userId);
+            usefulRepository.addDislike(reviewId, userId);
         }
     }
 
@@ -118,21 +109,9 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new NotFoundException(String.format("Отзыва с id %s нет в базе", reviewId)));
 
         if (isLike) {
-            usefulRepository.deleteLikeToReview(reviewId, userId);
+            usefulRepository.deleteLike(reviewId, userId);
         } else {
-            usefulRepository.deleteDislikeToReview(reviewId, userId);
+            usefulRepository.deleteDislike(reviewId, userId);
         }
-    }
-
-    private List<Review> fillingReviews(List<Review> reviews) {
-        Map<Integer, Integer> usefulness = usefulRepository.getUsefulToReviews(reviews.stream().map(Review::getId).toList());
-        for (Review review : reviews) {
-            Integer useful = usefulness.get(review.getId());
-            if (useful != null) {
-                review.setUseful(useful);
-            }
-        }
-
-        return reviews;
     }
 }

@@ -3,24 +3,18 @@ package ru.yandex.practicum.filmorate.dao;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 public interface DirectorRepository {
-    Optional<Director> getDirectorById(int directorId);
+    Optional<Director> getById(int directorId);
 
-    List<Director> getDirectorsById(List<Integer> directorsId);
+    List<Director> getById(List<Integer> directorsId);
 
-    Set<Director> getDirectorsByFilm(int filmId);
+    List<Director> get();
 
-    Map<Integer, Set<Director>> getDirectorsByFilms(List<Integer> filmsId);
+    Director create(Director director);
 
-    List<Director> getDirectors();
+    void update(Director director);
 
-    Director createDirector(Director director);
-
-    void updateDirector(Director director);
-
-    void deleteDirector(int directorId);
+    void delete(int directorId);
 }

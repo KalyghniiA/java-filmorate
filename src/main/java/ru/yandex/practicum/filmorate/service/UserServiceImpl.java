@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
 
         userStorage.addFriend(id, friendId);
         eventService.addEvent(new Event(id, EventType.FRIEND.name(), Operation.ADD.name(),
-                friendId, System.currentTimeMillis()));
+                friendId));
         return userStorage.getById(id).orElseThrow();
     }
 
@@ -79,7 +79,7 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
         userStorage.deleteFriend(id, friendId);
         eventService.addEvent(new Event(id, EventType.FRIEND.name(), Operation.REMOVE.name(),
-                friendId, System.currentTimeMillis()));
+                friendId));
     }
 
     @Override

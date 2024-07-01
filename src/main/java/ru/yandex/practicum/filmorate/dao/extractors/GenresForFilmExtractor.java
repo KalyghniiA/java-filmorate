@@ -6,15 +6,12 @@ import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
-public class GenresForFilmExtractor implements ResultSetExtractor<Set<Genre>> {
+public class GenresForFilmExtractor implements ResultSetExtractor<List<Genre>> {
     @Override
-    public Set<Genre> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
-
+    public List<Genre> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        List<Genre> genres = new ArrayList<>();
         while (rs.next()) {
             genres.add(new Genre(rs.getInt("GENRE_ID"), rs.getString("NAME")));
         }

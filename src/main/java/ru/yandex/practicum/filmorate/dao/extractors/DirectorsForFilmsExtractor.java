@@ -6,18 +6,15 @@ import ru.yandex.practicum.filmorate.model.Director;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class DirectorsForFilmsExtractor implements ResultSetExtractor<Map<Integer, Set<Director>>> {
+public class DirectorsForFilmsExtractor implements ResultSetExtractor<Map<Integer, List<Director>>> {
     @Override
-    public Map<Integer, Set<Director>> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Map<Integer, Set<Director>> directorsForFilms = new HashMap<>();
+    public Map<Integer, List<Director>> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        Map<Integer, List<Director>> directorsForFilms = new HashMap<>();
         while (rs.next()) {
             Integer filmId = rs.getInt("FILM_ID");
-            Set<Director> directors = directorsForFilms.computeIfAbsent(filmId, k -> new HashSet<>());
+            List<Director> directors = directorsForFilms.computeIfAbsent(filmId, k -> new ArrayList<>());
             Director director = new Director();
             director.setId(rs.getInt("DIRECTOR_ID"));
             director.setName(rs.getString("NAME"));

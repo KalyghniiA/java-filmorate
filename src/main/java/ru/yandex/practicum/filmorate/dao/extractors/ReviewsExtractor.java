@@ -22,6 +22,7 @@ public class ReviewsExtractor implements ResultSetExtractor<List<Review>> {
                     rs.getInt("FILM_ID")
             );
             review.setId(rs.getInt("REVIEW_ID"));
+            review.setUseful(rs.getInt("USEFUL"));
             reviews.add(review);
         }
 

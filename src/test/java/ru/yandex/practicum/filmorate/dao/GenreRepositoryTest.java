@@ -20,7 +20,7 @@ public class GenreRepositoryTest {
 
     @Test
     public void getGenreById() {
-        Optional<Genre> genreOptional = genreRepository.getGenreById(1);
+        Optional<Genre> genreOptional = genreRepository.getById(1);
 
         assertThat(genreOptional)
                 .isPresent()
@@ -32,7 +32,7 @@ public class GenreRepositoryTest {
 
     @Test
     public void getGenres() {
-        List<Genre> genres = genreRepository.getGenres();
+        List<Genre> genres = genreRepository.getAll();
         assertThat(genres.size()).isEqualTo(6);
     }
 }

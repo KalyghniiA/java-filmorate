@@ -15,11 +15,11 @@ public class MpaServiceImpl implements MpaService {
 
     @Override
     public List<Mpa> getRatings() {
-        return mpaRepository.getRatings();
+        return mpaRepository.getAll();
     }
 
     @Override
     public Mpa getRatingById(int ratingId) {
-        return mpaRepository.getRatingById(ratingId).orElseThrow(() -> new NotFoundException(String.format("Рейтинга с id %s нет в базе", ratingId)));
+        return mpaRepository.getById(ratingId).orElseThrow(() -> new NotFoundException(String.format("Рейтинга с id %s нет в базе", ratingId)));
     }
 }

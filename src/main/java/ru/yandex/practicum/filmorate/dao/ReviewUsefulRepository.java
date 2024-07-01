@@ -4,15 +4,15 @@ import java.util.List;
 import java.util.Map;
 
 public interface ReviewUsefulRepository {
-    Integer getUsefulToReview(int reviewId);
+    Integer getUseful(int reviewId);
 
-    Map<Integer, Integer> getUsefulToReviews(List<Integer> reviewsId);
+    Map<Integer, Integer> getUseful(List<Integer> reviewsId);
 
-    void addLikeToReview(int reviewId, int userId);
+    void addLike(int reviewId, int userId);
 
-    void addDislikeToReview(int reviewId, int userId);
+    void addDislike(int reviewId, int userId);
 
-    void deleteLikeToReview(int reviewId, int userId);
+    void deleteLike(int reviewId, int userId);
 
-    void deleteDislikeToReview(int reviewId, int userId);
+    void deleteDislike(int reviewId, int userId);
 }
