@@ -50,9 +50,10 @@ public class FilmServiceImpl implements FilmService {
             if (genres.size() != film.getGenres().size()) {
                 throw new ValidationException("Одного из жанров нет в базе");
             }
-
-            film.getGenres().clear();
-            film.getGenres().addAll(genres);
+            //из-за теста
+            Set<Genre> sortGenre = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+            sortGenre.addAll(genres);
+            film.setGenres(sortGenre);
         }
 
         if (!film.getDirectors().isEmpty()) {

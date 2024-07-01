@@ -7,6 +7,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.extractors.*;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -215,13 +216,19 @@ public class JdbcFilmRepository implements FilmRepository {
                     SELECT FILM_ID FROM FILM_DIRECTORS WHERE DIRECTOR_ID = :director_id
                     )
                 GROUP BY ID
-                ORDER BY CASE
-                    WHEN :by = 'year' THEN YEAR(RELEASE_DATE)
-                    WHEN :by = 'likes' THEN count(LIKES.FILM_ID) END
                 """;
-        Map<String, Object> param = Map.of("director_id", directorId, "by", by);
 
-        return getFilms(sql, param);
+        String orderBy = switch (by) {
+            case "year" -> "ORDER BY YEAR(RELEASE_DATE);";
+            case "likes" -> "ORDER BY COUNT(LIKES.FILM_ID) DESC";
+            default -> throw new ValidationException("Данный вид сортировки не обрабатывается");
+        };
+
+        String concatSql = sql + orderBy;
+
+        Map<String, Object> param = Map.of("director_id", directorId);
+
+        return getFilms(concatSql, param);
     }
 
     @Override
