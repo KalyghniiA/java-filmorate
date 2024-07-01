@@ -2,15 +2,11 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.GenreRepository;
-import ru.yandex.practicum.filmorate.dao.LikeRepository;
-import ru.yandex.practicum.filmorate.dao.MpaRepository;
+import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.dao.FilmRepository;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
+
 
 import java.util.*;
 
@@ -20,37 +16,54 @@ public class FilmServiceImpl implements FilmService {
     private final GenreRepository genreRepository;
     private final MpaRepository mpaRepository;
     private final LikeRepository likeRepository;
+    private final DirectorRepository directorRepository;
+    private final UserRepository userRepository;
+    private final EventService eventService;
 
 
     @Autowired
     public FilmServiceImpl(FilmRepository filmRepository,
                            GenreRepository genreRepository,
                            MpaRepository mpaRepository,
-                           LikeRepository likeRepository) {
+                           LikeRepository likeRepository,
+                           DirectorRepository directorRepository,
+                           UserRepository userRepository, EventService eventService) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.likeRepository = likeRepository;
+        this.directorRepository = directorRepository;
+        this.userRepository = userRepository;
+        this.eventService = eventService;
     }
 
     @Override
     public Film post(Film film) {
         if (film.getMpa() != null) {
             film.setMpa(
-                    mpaRepository.getRatingById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
+                    mpaRepository.getById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
             );
         }
 
         if (!film.getGenres().isEmpty()) {
-            Set<Genre> genres = Set.copyOf(genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList()));
+            List<Genre> genres = genreRepository.getById(film.getGenres().stream().map(Genre::getId).toList());
             if (genres.size() != film.getGenres().size()) {
                 throw new ValidationException("Одного из жанров нет в базе");
             }
-
-            film.setGenres(genres);
+            //из-за теста
+            Set<Genre> sortGenre = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+            sortGenre.addAll(genres);
+            film.setGenres(sortGenre);
         }
 
-
+        if (!film.getDirectors().isEmpty()) {
+            List<Director> directors = directorRepository.getById(film.getDirectors().stream().map(Director::getId).toList());
+            if (directors.size() != film.getDirectors().size()) {
+                throw new ValidationException("Одного из режиссеров нет в базе");
+            }
+            film.getDirectors().clear();
+            film.getDirectors().addAll(directors);
+        }
         return filmRepository.save(film);
     }
 
@@ -68,7 +81,7 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public Collection<Film> getAll() {
+    public List<Film> getAll() {
         return filmRepository.getAll();
     }
 
@@ -81,33 +94,90 @@ public class FilmServiceImpl implements FilmService {
 
         if (film.getMpa() != null) {
             film.setMpa(
-                    mpaRepository.getRatingById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
+                    mpaRepository.getById(film.getMpa().getId()).orElseThrow(() -> new ValidationException("Рейтинга нет в базе"))
             );
         }
 
         if (!film.getGenres().isEmpty()) {
-            Set<Genre> genres = Set.copyOf(genreRepository.getGenresById(film.getGenres().stream().map(Genre::getId).toList()));
+            List<Genre> genres = genreRepository.getById(film.getGenres().stream().map(Genre::getId).toList());
             if (genres.size() != film.getGenres().size()) {
                 throw new ValidationException("Одного из жанров нет в базе");
             }
-            film.setGenres(genres);
+            film.getGenres().clear();
+            film.getGenres().addAll(genres);
         }
+
+        if (!film.getDirectors().isEmpty()) {
+            List<Director> directors = directorRepository.getById(film.getDirectors().stream().map(Director::getId).toList());
+            if (directors.size() != film.getDirectors().size()) {
+                throw new ValidationException("Одного из режиссеров нет в базе");
+            }
+
+            film.getDirectors().clear();
+            film.getDirectors().addAll(directors);
+        }
+
         filmRepository.update(film);
         return film;
     }
 
     @Override
     public void addLike(int filmId, int userId) {
-        likeRepository.addLike(filmId, userId);
+        filmRepository.getById(filmId)
+                .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
+        userRepository.getById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
+        likeRepository.add(filmId, userId);
+        eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.ADD.name(),
+                filmId));
     }
 
     @Override
     public void removeLike(int filmId, int userId) {
-        likeRepository.removeLike(filmId, userId);
+        filmRepository.getById(filmId)
+                .orElseThrow(() -> new NotFoundException(String.format("Фильма с id %s нет в базе", filmId)));
+        userRepository.getById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
+        likeRepository.remove(filmId, userId);
+        eventService.addEvent(new Event(userId, EventType.LIKE.name(), Operation.REMOVE.name(),
+                filmId));
     }
 
     @Override
-    public List<Film> getPopular(int count) {
-        return filmRepository.getTopPopular(count);
+    public List<Film> getSearched(String query, String by) {
+        return filmRepository.searchFilmIds(query, by.toLowerCase().trim());
     }
+
+    @Override
+    public List<Film> getPopular(Integer count, Integer genreId, Integer year) { //для разных запросов
+        return filmRepository.getTopPopularWithFilter(count, year, genreId);
+    }
+
+    @Override
+    public List<Film> getFilmsToDirector(int directorId, String sortBy) {
+        List<Film> films = filmRepository.getFilmsToDirector(directorId, sortBy.toLowerCase().trim());
+
+        if (films.isEmpty()) {
+            throw new NotFoundException("по данным параметрам фильмов нет");
+        }
+        return films;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        userRepository.getById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
+        userRepository.getById(friendId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
+        //требуется делать отдельный метод для получения списка пользователей по айди что бы уменьшить обращения к базе?
+        return filmRepository.getCommonFilms(userId, friendId);
+    }
+
+
+    @Override
+    public List<Film> getRecommendations(int userId) {
+        return filmRepository.getFilmsById(filmRepository.getRecommendationFilmIdByUserId(userId));
+    }
+
+
 }

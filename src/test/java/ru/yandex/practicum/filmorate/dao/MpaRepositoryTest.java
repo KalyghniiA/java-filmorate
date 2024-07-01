@@ -20,7 +20,7 @@ public class MpaRepositoryTest {
 
     @Test
     public void getRatingById() {
-        Optional<Mpa> mpaOptional = mpaRepository.getRatingById(1);
+        Optional<Mpa> mpaOptional = mpaRepository.getById(1);
 
         assertThat(mpaOptional)
                 .isPresent()
@@ -32,7 +32,7 @@ public class MpaRepositoryTest {
 
     @Test
     public void getRatings() {
-        List<Mpa> mpaList = mpaRepository.getRatings();
+        List<Mpa> mpaList = mpaRepository.getAll();
 
         assertThat(mpaList.size()).isEqualTo(5);
     }

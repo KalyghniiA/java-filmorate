@@ -15,11 +15,11 @@ public class GenreServiceImpl implements GenreService {
 
     @Override
     public List<Genre> getGenres() {
-        return genreRepository.getGenres();
+        return genreRepository.getAll();
     }
 
     @Override
     public Genre getGenreById(int genreId) {
-        return genreRepository.getGenreById(genreId).orElseThrow(() -> new NotFoundException(String.format("Жанра с id %s нет в базе", genreId)));
+        return genreRepository.getById(genreId).orElseThrow(() -> new NotFoundException(String.format("Жанра с id %s нет в базе", genreId)));
     }
 }

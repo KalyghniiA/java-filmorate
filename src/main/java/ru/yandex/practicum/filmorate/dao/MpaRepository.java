@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MpaRepository {
-    List<Mpa> getRatings();
+    List<Mpa> getAll();
 
-    Optional<Mpa> getRatingById(int ratingId);
+    Optional<Mpa> getById(int ratingId);
 }

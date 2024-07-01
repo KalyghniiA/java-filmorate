@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.util.validateAnotation.dateRelease.ValidDat
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -26,4 +27,5 @@ public class Film {
     private final Integer duration;
     private Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
     private Mpa mpa;
+    private Set<Director> directors = new HashSet<>();
 }

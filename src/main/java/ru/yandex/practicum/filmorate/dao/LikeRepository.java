@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.dao;
 
 public interface LikeRepository {
-    void addLike(int filmId, int userId);
+    void add(int filmId, int userId);
 
-    void removeLike(int filmId, int userId);
+    void remove(int filmId, int userId);
 }

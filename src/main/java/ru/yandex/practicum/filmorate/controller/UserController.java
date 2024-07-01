@@ -4,7 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
@@ -14,10 +17,12 @@ import java.util.List;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final FilmService filmService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, FilmService filmService) {
         this.userService = userService;
+        this.filmService = filmService;
     }
 
     @PostMapping(value = "/users")
@@ -81,7 +86,7 @@ public class UserController {
     public List<User> getFriendsForUser(@PathVariable Integer id) {
         log.info("Получен GET запрос на получение списка друзей пользователя");
         List<User> friends = userService.getFriends(id);
-        log.info(String.format("Друзья пользователя с id %s отправлены",id));
+        log.info(String.format("Друзья пользователя с id %s отправлены", id));
         return friends;
     }
 
@@ -91,5 +96,19 @@ public class UserController {
         List<User> friends = userService.getMutualFriends(id, otherId);
         log.info(String.format("Список общих друзей пользователей с id %s и %s отправлен", id, otherId));
         return friends;
+    }
+
+    @GetMapping(value = "/users/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable int id) {
+        log.info("Получен GET запрос на получение рекомендаций");
+        List<Film> films =  filmService.getRecommendations(id);
+        log.info("Отправлены фильмы");
+        return films;
+    }
+
+    @GetMapping(value = "/users/{id}/feed")
+    public List<Event> getUsersFeed(@PathVariable Integer id) {
+        log.info("Получен GET запрос на получение списка событий пользователя");
+        return userService.getEventsByUser(id);
     }
 }
