@@ -17,13 +17,13 @@ public class JdbcMpaRepository implements MpaRepository {
     private final NamedParameterJdbcOperations jdbc;
 
     @Override
-    public List<Mpa> getRatings() {
+    public List<Mpa> getAll() {
         String sql = "SELECT RATING_ID AS ID, NAME FROM RATINGS;";
         return jdbc.query(sql, new MpaRowMapper());
     }
 
     @Override
-    public Optional<Mpa> getRatingById(int ratingId) {
+    public Optional<Mpa> getById(int ratingId) {
         String sql = "SELECT RATING_ID, NAME FROM RATINGS WHERE RATING_ID = :rating_id";
         Map<String, Object> param = Map.of("rating_id", ratingId);
         return Optional.ofNullable(jdbc.query(sql, param, new MpaExtractor()));

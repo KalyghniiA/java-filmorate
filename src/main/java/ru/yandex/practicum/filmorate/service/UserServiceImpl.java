@@ -2,11 +2,10 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.util.List;
 
@@ -14,24 +13,27 @@ import java.util.List;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userStorage;
+    private final EventService eventService;
+
+
 
     @Autowired
-    public UserServiceImpl(UserRepository userStorage) {
+    public UserServiceImpl(UserRepository userStorage,  EventService eventService) {
         this.userStorage = userStorage;
+        this.eventService = eventService;
     }
 
     @Override
     public User get(int id) {
-        try {
-            return userStorage.getById(id).orElseThrow();
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException(String.format("Пользователя с id %s нет в базе", id));
-        }
+        return userStorage.getById(id)
+                .orElseThrow(
+                        () -> new NotFoundException(String.format("Пользователя с id %s нет в базе", id))
+                );
     }
 
     @Override
     public User post(User user) {
-        if (user.getName() == null) {
+        if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         return userStorage.save(user);
@@ -47,7 +49,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User put(User user) {
-        if (user.getName() == null) {
+        if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         userStorage.getById(user.getId()).orElseThrow(() -> new NotFoundException(String.format("Пользователя id %s нет в базе", user.getId())));
@@ -66,6 +68,8 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
 
         userStorage.addFriend(id, friendId);
+        eventService.addEvent(new Event(id, EventType.FRIEND.name(), Operation.ADD.name(),
+                friendId));
         return userStorage.getById(id).orElseThrow();
     }
 
@@ -74,6 +78,8 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(id).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", id)));
         userStorage.getById(friendId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", friendId)));
         userStorage.deleteFriend(id, friendId);
+        eventService.addEvent(new Event(id, EventType.FRIEND.name(), Operation.REMOVE.name(),
+                friendId));
     }
 
     @Override
@@ -88,5 +94,16 @@ public class UserServiceImpl implements UserService {
         userStorage.getById(otherId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", otherId)));
 
         return userStorage.getMutualFriends(id, otherId);
+    }
+
+    @Override
+    public List<Event> getEventsByUser(Integer userId) {
+        userStorage.getById(userId).orElseThrow(() -> new NotFoundException(String.format("Пользователя с id %s нет в базе", userId)));
+        List<Event> events = eventService.getUserEvents(userId);
+        if (events.isEmpty()) {
+            throw new NotFoundException("У данного пользователя нет событий");
+        }
+
+        return events;
     }
 }
